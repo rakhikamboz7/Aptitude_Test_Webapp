@@ -7,6 +7,7 @@ import ProgressPage from "./pages/ProgressPage";
 import AdminDashboard from "./pages/AdminDashboard";
 import EmployabilityTestPage from "./pages/EmployabilityTestPage";
 import AuthPage from "./pages/AuthPage";
+import AssessmentPage from "./pages/Assessment";
 export default function App() {
   return (
  
@@ -15,6 +16,7 @@ export default function App() {
           <Route path="/" element={<HomePage />} />
           <Route path= "/auth" element={<AuthPage />} />
           <Route path="/quiz" element={<QuizPage />} />
+          <Route path="/assessments" element={<AssessmentPage />} />
           <Route path="/results" element={<ResultsPage />} />
           <Route path="/progress" element={<ProgressPage />} />
           <Route path="/admin" element={<AdminDashboard />} />
