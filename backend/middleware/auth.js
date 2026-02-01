@@ -1,25 +1,48 @@
-const jwt = require("jsonwebtoken")
+import jwt from "jsonwebtoken"
 
-const authMiddleware = (req, res, next) => {
+const auth = async (req, res, next) => {
   try {
-    const token = req.header("Authorization")?.replace("Bearer ", "")
-
-    if (!token) {
+    // Get token from header
+    const authHeader = req.header("Authorization")
+    
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
       return res.status(401).json({
         success: false,
-        error: "Access denied. No token provided.",
+        error: "No authentication token provided",
       })
     }
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || "your-secret-key")
+    // Extract token
+    const token = authHeader.replace("Bearer ", "")
+
+    // Verify token
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || "fallback-secret-key-change-in-production")
+
+    // Add user ID to request
     req.userId = decoded.userId
+
     next()
   } catch (error) {
+    if (error.name === "JsonWebTokenError") {
+      return res.status(401).json({
+        success: false,
+        error: "Invalid authentication token",
+      })
+    }
+    
+    if (error.name === "TokenExpiredError") {
+      return res.status(401).json({
+        success: false,
+        error: "Authentication token has expired",
+      })
+    }
+
+    console.error("Auth middleware error:", error)
     res.status(401).json({
       success: false,
-      error: "Invalid token.",
+      error: "Authentication failed",
     })
   }
 }
 
-module.exports = authMiddleware
+export default auth;

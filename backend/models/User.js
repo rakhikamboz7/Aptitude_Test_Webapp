@@ -1,47 +1,49 @@
-const mongoose = require("mongoose")
+import mongoose from "mongoose"
+const { ObjectId } = mongoose.Schema.Types
 
-const testResultSchema = new mongoose.Schema(
-  {
-    userId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
-      required: true,
-    },
-    answers: {
-      type: Map,
-      of: Number,
-      required: true,
-    },
-    score: {
-      type: Number,
-      required: true,
-      min: 0,
-      max: 100,
-    },
-    difficulty: {
-      type: String,
-      enum: ["easy", "medium", "hard"],
-      required: true,
-    },
-    timeSpent: {
-      type: Number,
-      required: true,
-      min: 0,
-    },
-    totalQuestions: {
-      type: Number,
-      required: true,
-      min: 1,
-    },
-    correctAnswers: {
-      type: Number,
-      required: true,
-      min: 0,
-    },
+const User = new mongoose.Schema(
+{
+  _id: ObjectId,
+  username: String,
+  email: String,
+  profile: {
+    firstName: String,
+    lastName: String,
+    targetCompany: String,
+    // ... other fields
   },
+  assessmentHistory: [
+    {
+      assessmentId: String,
+      company: String,
+      difficulty: String,
+      score: Number,
+      badge: {
+        level: String,
+        color: String
+      },
+      topicBreakdown: Map,
+      completedAt: Date
+    }
+  ],
+  statistics: {
+    totalAssessments: Number,
+    averageScore: Number,
+    bestScore: Number,
+    badgesEarned: {
+      beginner: Number,
+      intermediate: Number,
+      advanced: Number
+    },
+    companyStats: Map
+  },
+  createdAt: Date,
+  updatedAt: Date
+},
   {
     timestamps: true,
   },
 )
 
-module.exports = mongoose.model("TestResult", testResultSchema)
+
+export default User;

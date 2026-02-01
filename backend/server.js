@@ -3,7 +3,8 @@ import cors from "cors"
 import dotenv from "dotenv"
 import questionsRoute from "./routes/questions.js"
 import feedbackRoute from "./routes/feedback.js"
-// Load environment variables
+import authRoutes from "./routes/auth.js"
+
 dotenv.config()
 
 const app = express()
@@ -15,12 +16,14 @@ app.use(express.json())
 
 // Routes
 app.use("/api/questions",  questionsRoute)
+app.use ("/api/auth",  authRoutes)
 app.use("/api/feedback", feedbackRoute)
 
 // Health check endpoint
 app.get("/health", (req, res) => {
   res.json({ status: "OK", message: "Aptitude Test API Server is running" })
 })
+console.log("Groq key:", process.env.GROQ_API_KEY?.slice(0,10));
 
 // Error handling middleware
 app.use((err, req, res, next) => {

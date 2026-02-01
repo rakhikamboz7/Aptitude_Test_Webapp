@@ -1,9 +1,7 @@
-"use client"
-
-import { useState, useEffect } from "react"
+import React, { useState, useEffect } from "react"
 import { useNavigate } from "react-router-dom"
 import { Button } from "../components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "../components/ui/card"
 import { Badge } from "../components/ui/badge"
 import { Progress } from "../components/ui/progress"
 import { Navigation } from "../components/navigation"
@@ -18,12 +16,17 @@ import {
   Lightbulb,
   Star,
   Award,
+  Clock,
+  Building2,
+  Zap,
+  ArrowRight,
 } from "lucide-react"
 
 export default function ResultsPage() {
   const navigate = useNavigate()
   const [results, setResults] = useState(null)
   const [isLoading, setIsLoading] = useState(true)
+  const [showBadgeCelebration, setShowBadgeCelebration] = useState(true)
 
   useEffect(() => {
     const savedResults = localStorage.getItem("quizResults")
@@ -31,6 +34,9 @@ export default function ResultsPage() {
       try {
         const parsedResults = JSON.parse(savedResults)
         setResults(parsedResults)
+        
+        // Auto-dismiss badge celebration after 5 seconds
+        setTimeout(() => setShowBadgeCelebration(false), 5000)
       } catch (error) {
         console.error("Error parsing results:", error)
         navigate("/")
@@ -46,16 +52,44 @@ export default function ResultsPage() {
     navigate("/")
   }
 
-  const getScoreColor = (score) => {
-    if (score >= 80) return "text-green-600"
-    if (score >= 60) return "text-yellow-600"
-    return "text-red-600"
+  const getBadgeInfo = (badge) => {
+    const badges = {
+      beginner: {
+        color: "bg-yellow-500",
+        textColor: "text-yellow-700",
+        bgLight: "bg-yellow-50",
+        borderColor: "border-yellow-200",
+        icon: "🥉",
+        title: "Beginner Badge",
+        description: "Great start on your learning journey!",
+      },
+      intermediate: {
+        color: "bg-blue-500",
+        textColor: "text-blue-700",
+        bgLight: "bg-blue-50",
+        borderColor: "border-blue-200",
+        icon: "🥈",
+        title: "Intermediate Badge",
+        description: "Solid performance! You're progressing well!",
+      },
+      advanced: {
+        color: "bg-purple-500",
+        textColor: "text-purple-700",
+        bgLight: "bg-purple-50",
+        borderColor: "border-purple-200",
+        icon: "🥇",
+        title: "Advanced Badge",
+        description: "Outstanding! You're mastering these concepts!",
+      },
+    }
+    return badges[badge?.level] || badges.beginner
   }
 
-  const getScoreBadgeVariant = (score) => {
-    if (score >= 80) return "default"
-    if (score >= 60) return "secondary"
-    return "destructive"
+  const getScoreColor = (score) => {
+    if (score >= 80) return "text-green-600"
+    if (score >= 60) return "text-blue-600"
+    if (score >= 40) return "text-yellow-600"
+    return "text-red-600"
   }
 
   const getPerformanceMessage = (score) => {
@@ -73,7 +107,7 @@ export default function ResultsPage() {
         <div className="flex items-center justify-center min-h-[calc(100vh-4rem)]">
           <div className="text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-            <p className="text-lg text-muted-foreground">Loading your results...</p>
+            <p className="text-lg text-muted-foreground">Analyzing your results...</p>
           </div>
         </div>
       </div>
@@ -84,8 +118,8 @@ export default function ResultsPage() {
     return (
       <div className="min-h-screen bg-background">
         <Navigation />
-        <div className="flex items-center justify-center min-h-[calc(100vh-4rem)]">
-          <Card className="max-w-md">
+        <div className="flex items-center justify-center min-h-[calc(100vh-4rem)] px-4">
+          <Card className="max-w-md shadow-xl">
             <CardHeader>
               <CardTitle className="text-center">No Results Found</CardTitle>
             </CardHeader>
@@ -101,11 +135,37 @@ export default function ResultsPage() {
     )
   }
 
-  const { score, correctAnswers, totalQuestions, timeSpent, feedback, detailedResults } = results
+  const { score, correctAnswers, totalQuestions, timeSpent, feedback, badge, company } = results
+  const badgeInfo = getBadgeInfo(badge)
 
   return (
     <div className="min-h-screen bg-background">
       <Navigation />
+
+      {/* Badge Celebration Banner */}
+      {showBadgeCelebration && badge && (
+        <div className={`${badgeInfo.bgLight} border-b-2 ${badgeInfo.borderColor} py-6 px-4 animate-in slide-in-from-top`}>
+          <div className="max-w-4xl mx-auto text-center">
+            <div className="flex items-center justify-center space-x-3 mb-2">
+              <div className={`text-5xl ${badgeInfo.color} rounded-full p-4`}>
+                {badgeInfo.icon}
+              </div>
+              <div className="text-left">
+                <h3 className={`text-2xl font-bold ${badgeInfo.textColor}`}>{badgeInfo.title} Earned!</h3>
+                <p className="text-muted-foreground">{badgeInfo.description}</p>
+              </div>
+            </div>
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={() => setShowBadgeCelebration(false)}
+              className="mt-2"
+            >
+              Dismiss
+            </Button>
+          </div>
+        </div>
+      )}
 
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
@@ -115,62 +175,78 @@ export default function ResultsPage() {
               <Trophy className="h-12 w-12 text-primary" />
             </div>
           </div>
-          <h1 className="text-4xl font-bold text-foreground mb-2">Test Results</h1>
-          <p className="text-lg text-muted-foreground">{getPerformanceMessage(score)}</p>
+          <h1 className="text-4xl font-bold text-foreground mb-2">Assessment Results</h1>
+          <p className="text-xl text-muted-foreground mb-2">{getPerformanceMessage(score)}</p>
+          {company && company !== "general" && (
+            <Badge variant="outline" className="px-4 py-2 text-base">
+              <Building2 className="h-4 w-4 mr-2" />
+              {company.toUpperCase()} Assessment
+            </Badge>
+          )}
         </div>
 
         {/* Score Overview */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <Card className="text-center">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          <Card className="text-center shadow-lg hover:shadow-xl transition-shadow">
             <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Overall Score</CardTitle>
+              <CardTitle className="text-sm font-medium text-muted-foreground flex items-center justify-center">
+                <Target className="h-4 w-4 mr-2" />
+                Overall Score
+              </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className={`text-4xl font-bold mb-2 ${getScoreColor(score)}`}>{score}%</div>
-              <Badge variant={getScoreBadgeVariant(score)} className="text-xs">
+              <div className={`text-5xl font-bold mb-2 ${getScoreColor(score)}`}>{score}%</div>
+              <Badge variant={score >= 80 ? "default" : score >= 60 ? "secondary" : "destructive"}>
                 {score >= 80 ? "Excellent" : score >= 60 ? "Good" : "Needs Improvement"}
               </Badge>
             </CardContent>
           </Card>
 
-          <Card className="text-center">
+          <Card className="text-center shadow-lg hover:shadow-xl transition-shadow">
             <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Correct Answers</CardTitle>
+              <CardTitle className="text-sm font-medium text-muted-foreground flex items-center justify-center">
+                <CheckCircle2 className="h-4 w-4 mr-2" />
+                Correct Answers
+              </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-4xl font-bold mb-2 text-green-600">{correctAnswers}</div>
+              <div className="text-5xl font-bold mb-2 text-green-600">{correctAnswers}</div>
               <p className="text-sm text-muted-foreground">out of {totalQuestions}</p>
             </CardContent>
           </Card>
 
-          <Card className="text-center">
+          <Card className="text-center shadow-lg hover:shadow-xl transition-shadow">
             <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Time Taken</CardTitle>
+              <CardTitle className="text-sm font-medium text-muted-foreground flex items-center justify-center">
+                <Clock className="h-4 w-4 mr-2" />
+                Time Taken
+              </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-4xl font-bold mb-2 text-blue-600">{timeSpent}</div>
+              <div className="text-5xl font-bold mb-2 text-blue-600">{timeSpent}</div>
               <p className="text-sm text-muted-foreground">minutes</p>
             </CardContent>
           </Card>
 
-          <Card className="text-center">
+          <Card className={`text-center shadow-lg hover:shadow-xl transition-shadow border-2 ${badgeInfo.borderColor} ${badgeInfo.bgLight}`}>
             <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Accuracy</CardTitle>
+              <CardTitle className={`text-sm font-medium flex items-center justify-center ${badgeInfo.textColor}`}>
+                <Award className="h-4 w-4 mr-2" />
+                Achievement
+              </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-4xl font-bold mb-2 text-purple-600">
-                {Math.round((correctAnswers / totalQuestions) * 100)}%
-              </div>
-              <p className="text-sm text-muted-foreground">precision</p>
+              <div className="text-5xl mb-2">{badgeInfo.icon}</div>
+              <p className={`text-sm font-semibold ${badgeInfo.textColor}`}>{badgeInfo.title}</p>
             </CardContent>
           </Card>
         </div>
 
         {/* AI Feedback Section */}
         {feedback && (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
             {/* Overall Summary */}
-            <Card>
+            <Card className="shadow-lg">
               <CardHeader>
                 <CardTitle className="flex items-center space-x-2">
                   <Brain className="h-5 w-5 text-primary" />
@@ -178,32 +254,32 @@ export default function ResultsPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-muted-foreground leading-relaxed mb-4">{feedback.overallSummary}</p>
-                <div className="space-y-4">
+                <p className="text-muted-foreground leading-relaxed mb-6 text-base">{feedback.overallSummary}</p>
+                <div className="space-y-6">
                   <div>
-                    <h4 className="font-semibold text-green-600 mb-2 flex items-center">
-                      <CheckCircle2 className="h-4 w-4 mr-2" />
-                      Strengths
+                    <h4 className="font-semibold text-green-600 mb-3 flex items-center text-lg">
+                      <CheckCircle2 className="h-5 w-5 mr-2" />
+                      Your Strengths
                     </h4>
-                    <ul className="space-y-1">
+                    <ul className="space-y-2">
                       {feedback.strengths?.map((strength, index) => (
-                        <li key={index} className="text-sm text-muted-foreground flex items-start">
-                          <Star className="h-3 w-3 mr-2 mt-1 text-yellow-500 flex-shrink-0" />
-                          {strength}
+                        <li key={index} className="text-sm text-muted-foreground flex items-start p-3 bg-green-50 rounded-lg">
+                          <Star className="h-4 w-4 mr-2 mt-0.5 text-green-600 flex-shrink-0" />
+                          <span>{strength}</span>
                         </li>
                       ))}
                     </ul>
                   </div>
                   <div>
-                    <h4 className="font-semibold text-orange-600 mb-2 flex items-center">
-                      <Target className="h-4 w-4 mr-2" />
-                      Areas for Improvement
+                    <h4 className="font-semibold text-orange-600 mb-3 flex items-center text-lg">
+                      <Target className="h-5 w-5 mr-2" />
+                      Areas for Growth
                     </h4>
-                    <ul className="space-y-1">
+                    <ul className="space-y-2">
                       {feedback.improvements?.map((improvement, index) => (
-                        <li key={index} className="text-sm text-muted-foreground flex items-start">
-                          <TrendingUp className="h-3 w-3 mr-2 mt-1 text-blue-500 flex-shrink-0" />
-                          {improvement}
+                        <li key={index} className="text-sm text-muted-foreground flex items-start p-3 bg-orange-50 rounded-lg">
+                          <TrendingUp className="h-4 w-4 mr-2 mt-0.5 text-orange-600 flex-shrink-0" />
+                          <span>{improvement}</span>
                         </li>
                       ))}
                     </ul>
@@ -213,27 +289,44 @@ export default function ResultsPage() {
             </Card>
 
             {/* Topic Breakdown */}
-            <Card>
+            <Card className="shadow-lg">
               <CardHeader>
                 <CardTitle className="flex items-center space-x-2">
                   <BookOpen className="h-5 w-5 text-primary" />
                   <span>Topic Performance</span>
                 </CardTitle>
+                <CardDescription>Your accuracy across different question categories</CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="space-y-4">
+                <div className="space-y-5">
                   {feedback.topicBreakdown &&
-                    Object.entries(feedback.topicBreakdown).map(([topic, stats]) => (
-                      <div key={topic} className="space-y-2">
-                        <div className="flex items-center justify-between">
-                          <span className="font-medium capitalize">{topic}</span>
-                          <Badge variant="outline" className="text-xs">
-                            {stats.correct}/{stats.total} ({stats.percentage}%)
-                          </Badge>
+                    Object.entries(feedback.topicBreakdown)
+                      .sort(([, a], [, b]) => b.percentage - a.percentage)
+                      .map(([topic, stats]) => (
+                        <div key={topic} className="space-y-2">
+                          <div className="flex items-center justify-between">
+                            <span className="font-semibold capitalize text-base">{topic}</span>
+                            <div className="flex items-center space-x-3">
+                              <span className="text-sm text-muted-foreground">
+                                {stats.correct}/{stats.total}
+                              </span>
+                              <Badge
+                                variant="outline"
+                                className={`text-sm font-bold px-3 py-1 ${
+                                  stats.percentage >= 80
+                                    ? "bg-green-100 text-green-800 border-green-300"
+                                    : stats.percentage >= 60
+                                      ? "bg-blue-100 text-blue-800 border-blue-300"
+                                      : "bg-yellow-100 text-yellow-800 border-yellow-300"
+                                }`}
+                              >
+                                {stats.percentage}%
+                              </Badge>
+                            </div>
+                          </div>
+                          <Progress value={stats.percentage} className="h-3" />
                         </div>
-                        <Progress value={stats.percentage} className="h-2" />
-                      </div>
-                    ))}
+                      ))}
                 </div>
               </CardContent>
             </Card>
@@ -242,18 +335,22 @@ export default function ResultsPage() {
 
         {/* Recommendations */}
         {feedback?.recommendations && (
-          <Card className="mb-8">
+          <Card className="mb-8 shadow-lg">
             <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <Lightbulb className="h-5 w-5 text-primary" />
+              <CardTitle className="flex items-center space-x-2 text-xl">
+                <Lightbulb className="h-6 w-6 text-primary" />
                 <span>Personalized Study Recommendations</span>
               </CardTitle>
+              <CardDescription>Targeted advice to help you improve</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {feedback.recommendations.map((recommendation, index) => (
-                  <div key={index} className="p-4 bg-muted/30 rounded-lg">
-                    <p className="text-sm text-muted-foreground">{recommendation}</p>
+                  <div key={index} className="p-5 bg-gradient-to-br from-primary/5 to-secondary/5 rounded-xl border border-border hover:shadow-md transition-shadow">
+                    <div className="flex items-start space-x-3">
+                      <Zap className="h-5 w-5 text-primary mt-1 flex-shrink-0" />
+                      <p className="text-sm text-muted-foreground leading-relaxed">{recommendation}</p>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -263,23 +360,26 @@ export default function ResultsPage() {
 
         {/* Motivational Message & Next Steps */}
         {feedback?.motivationalMessage && (
-          <Card className="mb-8 bg-gradient-to-r from-primary/5 to-secondary/5">
+          <Card className="mb-8 bg-gradient-to-r from-primary/10 to-secondary/10 border-2 border-primary/20 shadow-xl">
             <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <Award className="h-5 w-5 text-primary" />
-                <span>Keep Going!</span>
+              <CardTitle className="flex items-center space-x-2 text-xl">
+                <Award className="h-6 w-6 text-primary" />
+                <span>Keep Pushing Forward!</span>
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-muted-foreground mb-4 leading-relaxed">{feedback.motivationalMessage}</p>
+              <p className="text-muted-foreground mb-6 leading-relaxed text-lg">{feedback.motivationalMessage}</p>
               {feedback.nextSteps && (
                 <div>
-                  <h4 className="font-semibold mb-2">Next Steps:</h4>
-                  <ul className="space-y-1">
+                  <h4 className="font-semibold mb-3 text-lg flex items-center">
+                    <ArrowRight className="h-5 w-5 mr-2 text-primary" />
+                    Your Next Steps:
+                  </h4>
+                  <ul className="space-y-2">
                     {feedback.nextSteps.map((step, index) => (
-                      <li key={index} className="text-sm text-muted-foreground flex items-start">
-                        <CheckCircle2 className="h-3 w-3 mr-2 mt-1 text-green-500 flex-shrink-0" />
-                        {step}
+                      <li key={index} className="text-sm text-muted-foreground flex items-start p-3 bg-white/60 rounded-lg">
+                        <CheckCircle2 className="h-4 w-4 mr-2 mt-0.5 text-green-500 flex-shrink-0" />
+                        <span>{step}</span>
                       </li>
                     ))}
                   </ul>
@@ -290,8 +390,8 @@ export default function ResultsPage() {
         )}
 
         {/* Action Buttons */}
-        <div className="flex flex-col sm:flex-row gap-4 justify-center">
-          <Button onClick={handleRetakeTest} size="lg" className="text-lg px-8 py-4 h-auto">
+        <div className="flex flex-col sm:flex-row gap-4 justify-center items-stretch sm:items-center">
+          <Button onClick={handleRetakeTest} size="lg" className="text-lg px-10 py-6 shadow-xl hover:shadow-2xl">
             <RotateCcw className="h-5 w-5 mr-2" />
             Take Another Test
           </Button>
@@ -299,10 +399,10 @@ export default function ResultsPage() {
             variant="outline"
             onClick={() => navigate("/progress")}
             size="lg"
-            className="text-lg px-8 py-4 h-auto bg-transparent"
+            className="text-lg px-10 py-6 bg-transparent shadow-lg hover:shadow-xl"
           >
             <TrendingUp className="h-5 w-5 mr-2" />
-            View Progress
+            View Progress Dashboard
           </Button>
         </div>
       </div>
