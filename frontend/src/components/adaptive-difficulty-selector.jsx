@@ -318,36 +318,28 @@ export function AdaptiveDifficultySelector({ onDifficultySelect, selectedDifficu
             const Icon = diff.icon
             const isRecommended = progressData?.recommendedDifficulty === diff.level
             const isSelected = selectedDifficulty === diff.level
-
-            return (
+return (
               <Card
                 key={diff.level}
                 onClick={() => onDifficultySelect(diff.level)}
-                // Added flex, flex-col, and h-full to make the cards equal height
-                className={`group relative cursor-pointer flex flex-col h-full transition-all duration-500 overflow-hidden ${
+                // We force the background to stay slate-900 here
+                className={`group relative cursor-pointer flex flex-col h-full transition-all duration-500 overflow-hidden bg-slate-900/80 backdrop-blur-xl ${
                   isSelected
-                    ? "bg-slate-900/70 backdrop-blur-xl border-2 scale-105 shadow-2xl"
-                    : "bg-slate-900/50 backdrop-blur-xl border border-slate-800/50 hover:border-slate-700/50 hover:scale-105"
-                } ${isSelected ? diff.borderColor : ""}`}
+                    ? `border-2 ${diff.borderColor} scale-105 shadow-2xl`
+                    : "border border-slate-800/50 hover:border-slate-700/50 hover:scale-105"
+                }`}
                 style={{
                   animation: `slideUp 0.5s ease-out ${index * 0.1}s backwards`,
                 }}
               >
-                {/* Gradient Background */}
-                <div
-                  className={`absolute inset-0 bg-gradient-to-br ${diff.color} transition-opacity duration-500 ${
-                    isSelected ? "opacity-20" : "opacity-0 group-hover:opacity-10"
-                  }`}
-                />
-
-                {/* Glow Effect */}
-                {isSelected && (
-                  <div className={`absolute inset-0 bg-gradient-to-r ${diff.color} opacity-20 blur-xl`} />
-                )}
+                {/* NOTE: The colored 'inset-0' background overlays have been DELETED here 
+                  so the card background never changes color! 
+                */}
 
                 <CardHeader className="pb-3 relative z-10">
                   <div className="flex items-start justify-between mb-3">
                     <div className="flex items-center gap-3">
+                      {/* THIS is where the icon background changes color on select */}
                       <div
                         className={`p-3 rounded-xl shadow-lg transform group-hover:scale-110 transition-transform duration-300 ${
                           isSelected ? `bg-gradient-to-br ${diff.color}` : "bg-slate-800 border border-slate-700"
@@ -372,6 +364,7 @@ export function AdaptiveDifficultySelector({ onDifficultySelect, selectedDifficu
                       </div>
                     </div>
 
+                    {/* The Tick Mark stays */}
                     {isSelected && (
                       <div className="animate-scale-in">
                         <div className="w-7 h-7 bg-white rounded-full flex items-center justify-center shadow-lg">
@@ -382,7 +375,6 @@ export function AdaptiveDifficultySelector({ onDifficultySelect, selectedDifficu
                   </div>
                 </CardHeader>
 
-                {/* Added flex, flex-col, and flex-grow so we can push the button to the bottom */}
                 <CardContent className="relative z-10 flex flex-col flex-grow min-h-[100px]">
                   <CardDescription className={`text-sm leading-relaxed ${isSelected ? "text-slate-300" : "text-slate-400"}`}>
                     {diff.description}
@@ -395,19 +387,15 @@ export function AdaptiveDifficultySelector({ onDifficultySelect, selectedDifficu
                     </div>
                   )}
 
-                  {/* NEW: Quick Start button anchored to the bottom */}
+                  {/* Quick Start button with fixed syntax and forced white color */}
                   <div className="mt-auto pt-6">
                     <button
                       onClick={(e) => {
-                        e.stopPropagation(); // Prevents the card onClick from firing twice
+                        e.stopPropagation(); 
                         onDifficultySelect(diff.level);
                         if (onStartTest) onStartTest();
                       }}
-                      className={`className="w-fit flex items-center justify-start text-sm font-semibold transition-colors duration-300 text-white hover:text-slate-300" ${
-                        isSelected 
-                          ? "text-blue-400 hover:text-blue-300" 
-                          : "text-indigo-400 group-hover:text-indigo-300"
-                      }`}
+                      className="w-fit flex items-center justify-start text-sm font-semibold transition-colors duration-300 text-white hover:text-slate-300"
                     >
                       Quick Start <ArrowRight className="ml-2 h-4 w-4 transform group-hover:translate-x-1 transition-transform duration-300" />
                     </button>

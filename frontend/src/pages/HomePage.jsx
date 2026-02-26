@@ -37,6 +37,7 @@ import {
   Activity, 
   FileText, 
   ExternalLink,
+  Layers
 } from "lucide-react"
 
 export default function HomePage() {
@@ -457,9 +458,9 @@ export default function HomePage() {
         <div className="max-w-7xl mx-auto">
 
            {/* Hero Section */}
-          <div className="text-left mb-12">
+          <div className="text-center mb-12">
             <div className="relative mb-8 mt-8">
-              <h1 className="text-2xl sm:text-6xl lg:text-7xl font-bold text-white mb-6 animate-fade-in leading-tight">
+              <h1 className="text-xl sm:text-6xl lg:text-7xl font-bold text-white mb-6 animate-fade-in leading-tight">
                 Professional Career
                 <br />
                 <span className="relative inline-block">
@@ -514,9 +515,7 @@ export default function HomePage() {
               {/* Top Row: Title & Search */}
               <div className="flex flex-col md:flex-row items-center justify-between gap-4 mb-6">
                 <h3 className="text-xl font-bold text-white flex items-center gap-3">
-                  <div className="p-1.5 bg-gradient-to-br from-blue-600 to-sky-500 rounded-lg">
-                    <Building2 className="h-5 w-5 text-white" />
-                  </div>
+                  <Building2 className="h-6 w-6 text-sky-400" />
                   Target Organization
                 </h3>
 
@@ -603,11 +602,11 @@ export default function HomePage() {
             {/* Header Area matching the inspiration image */}
             <div className="flex flex-col md:flex-row items-end justify-between mb-10">
               <div>
-                <div className="flex items-center gap-3 mb-6">
-          <div className="p-2 bg-gradient-to-br from-blue-600 to-sky-500 rounded-lg">
-            <Target className="h-5 w-5 text-white" />
-          </div>
-          <br></br>
+                <div className="flex items-center gap-3 mb-6 mt-5">
+          
+            <Layers className="h-5 w-5 text-sky-400" />
+          
+          
           <h3 className="text-2xl font-bold text-white">Select Difficulty Level</h3>
         </div> 
                 <p className="text-slate-400 max-w-2xl">
@@ -637,119 +636,120 @@ export default function HomePage() {
 
           
           {/* Gemini-Powered Intelligence Card */}
-          <div className="mb-24 max-w-7xl mx-auto animate-fade-in" style={{ animationDelay: "0.2s" }}>
+          <div className="mb-24 max-w-5xl mx-auto animate-fade-in" style={{ animationDelay: "0.2s" }}>
             <div className="bg-slate-900/40 backdrop-blur-xl border border-slate-800/60 rounded-3xl overflow-hidden shadow-2xl flex flex-col lg:flex-row-reverse">
               
               {/* Left Content Area (Reversed to sit on the Right) */}
-              <div className="p-10 lg:p-10 lg:w-1/2 flex flex-col justify-center relative">
+              <div className="p-8 lg:p-10 lg:w-1/2 flex flex-col justify-center relative">
                 <div className="absolute top-0 right-0 w-full h-full bg-gradient-to-bl from-purple-500/5 to-transparent pointer-events-none" />
                 
-                <Badge className="w-fit mb-6 bg-purple-500/20 text-purple-300 border-purple-500/30 px-4 py-1.5 font-semibold tracking-wide text-xs">
+                <Badge className="w-fit mb-4 bg-purple-500/20 text-purple-300 border-purple-500/30 px-3 py-1 font-semibold tracking-wide text-[10px]">
                   Simple & Powerful
                 </Badge>
                 
-                <h2 className="text-3xl lg:text-4xl font-bold text-white mb-6">
+                <h2 className="text-2xl lg:text-3xl font-bold text-white mb-4">
                   Gemini-Powered Intelligence
                 </h2>
                 
-                <p className="text-lg text-slate-400 mb-10 leading-relaxed">
+                <p className="text-base text-slate-400 mb-8 leading-relaxed">
                   Rather than relying on a mix of secondary algorithms, we chose a direct, streamlined integration with Google Gemini. This ensures your assessments are evaluated with pure, world-class reasoning.
                 </p>
                 
                 {/* 2 Key Points */}
-                <div className="space-y-8 mb-10">
-                  <div className="flex gap-4">
-                    <div className="mt-1 w-8 h-8 rounded-full bg-purple-500/20 flex items-center justify-center shrink-0 border border-purple-500/30">
-                      <CheckCircle2 className="w-4 h-4 text-purple-400" />
+                <div className="space-y-6 mb-8">
+                  <div className="flex gap-3">
+                    <div className="mt-1 w-6 h-6 rounded-full bg-purple-500/20 flex items-center justify-center shrink-0 border border-purple-500/30">
+                      <CheckCircle2 className="w-3.5 h-3.5 text-purple-400" />
                     </div>
                     <div>
-                      <h4 className="text-white font-semibold text-lg mb-1">Dynamic Gemini Reasoning</h4>
-                      <p className="text-slate-400 text-sm leading-relaxed">Leverage the native logic and semantic understanding of Google Gemini to analyze your complex answers without middle-ware interference.</p>
+                      <h4 className="text-white font-semibold text-base mb-1">Dynamic Gemini Reasoning</h4>
+                      <p className="text-slate-400 text-xs leading-relaxed">Leverage the native logic and semantic understanding of Google Gemini to analyze your complex answers without middle-ware interference.</p>
                     </div>
                   </div>
-                  <div className="flex gap-4">
-                    <div className="mt-1 w-8 h-8 rounded-full bg-purple-500/20 flex items-center justify-center shrink-0 border border-purple-500/30">
-                      <CheckCircle2 className="w-4 h-4 text-purple-400" />
+                  <div className="flex gap-3">
+                    <div className="mt-1 w-6 h-6 rounded-full bg-purple-500/20 flex items-center justify-center shrink-0 border border-purple-500/30">
+                      <CheckCircle2 className="w-3.5 h-3.5 text-purple-400" />
                     </div>
                     <div>
-                      <h4 className="text-white font-semibold text-lg mb-1">Personalized Gemini Roadmap</h4>
-                      <p className="text-slate-400 text-sm leading-relaxed">Receive a learning plan synthesized directly from Gemini's analysis of your cognitive gaps in real-time.</p>
+                      <h4 className="text-white font-semibold text-base mb-1">Personalized Gemini Roadmap</h4>
+                      <p className="text-slate-400 text-xs leading-relaxed">Receive a learning plan synthesized directly from Gemini's analysis of your cognitive gaps in real-time.</p>
                     </div>
                   </div>
                 </div>
 
+                {/* REDUCED BUTTON SIZE: Changed px-8 py-6 to px-6 py-4 */}
                 <Button 
                   onClick={() => navigate('/progress')} 
-                  className="w-fit bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white px-8 py-6 h-auto rounded-xl text-base font-semibold shadow-lg shadow-purple-500/20 flex items-center gap-3 transition-all duration-300 group"
+                  className="w-fit bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white px-6 py-4 h-auto rounded-xl text-sm font-semibold shadow-lg shadow-purple-500/20 flex items-center gap-2 transition-all duration-300 group"
                 >
-                  <Sparkles className="w-5 h-5 group-hover:scale-110 transition-transform" />
+                  <Sparkles className="w-4 h-4 group-hover:scale-110 transition-transform" />
                   Get Gemini Report
                 </Button>
               </div>
               
               {/* Right Content Area (The Professional Analytics UI Dashboard) */}
-              <div className="p-6 lg:p-10 lg:w-1/2 bg-slate-950/40 border-r border-slate-800/50 flex items-center justify-center relative">
+              <div className="p-6 lg:p-8 lg:w-1/2 bg-slate-950/40 border-r border-slate-800/50 flex items-center justify-center relative">
                 <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-purple-900/20 via-slate-950/0 to-slate-950/0 pointer-events-none" />
                 
                 <div className="bg-slate-900 border border-slate-700/50 rounded-2xl w-full max-w-md shadow-2xl overflow-hidden transform transition-transform hover:-translate-y-1 duration-500">
                   
                   {/* Dashboard Header */}
-                  <div className="bg-gradient-to-r from-purple-600 to-indigo-600 p-4 lg:p-5 flex items-center justify-between">
-                    <div className="flex items-center gap-2 text-white font-bold text-sm tracking-wide">
-                      <Sparkles className="w-4 h-4" />
+                  <div className="bg-gradient-to-r from-purple-600 to-indigo-600 p-4 flex items-center justify-between">
+                    <div className="flex items-center gap-2 text-white font-bold text-xs tracking-wide">
+                      <Sparkles className="w-3.5 h-3.5" />
                       GEMINI PERFORMANCE ANALYSIS
                     </div>
-                    <Badge className="bg-white/20 text-white border-none hover:bg-white/20 text-[10px] tracking-wider">
+                    <Badge className="bg-white/20 text-white border-none hover:bg-white/20 text-[8px] tracking-wider px-1.5">
                       GEMINI-1.5-PRO
                     </Badge>
                   </div>
                   
                   {/* Dashboard Body */}
-                  <div className="p-6 lg:p-8 space-y-8">
+                  <div className="p-5 lg:p-6 space-y-6">
                     {/* Progress Bar 1 */}
                     <div>
-                      <div className="flex justify-between text-sm mb-3">
+                      <div className="flex justify-between text-xs mb-2.5">
                         <span className="text-white font-medium">Complex Data Interpretation</span>
                         <span className="text-purple-400 font-bold">92%</span>
                       </div>
-                      <div className="w-full bg-slate-800 rounded-full h-2">
-                        <div className="bg-purple-500 h-2 rounded-full relative">
-                          <div className="absolute right-0 top-1/2 transform -translate-y-1/2 w-1.5 h-1.5 bg-white rounded-full mr-0.5 shadow-[0_0_5px_rgba(255,255,255,0.8)]" />
+                      <div className="w-full bg-slate-800 rounded-full h-1.5">
+                        <div className="bg-purple-500 h-1.5 rounded-full relative" style={{ width: '92%' }}>
+                          <div className="absolute right-0 top-1/2 transform -translate-y-1/2 w-1.5 h-1.5 bg-white rounded-full mr-0 shadow-[0_0_5px_rgba(255,255,255,0.8)]" />
                         </div>
                       </div>
                     </div>
                     
                     {/* Progress Bar 2 */}
                     <div>
-                      <div className="flex justify-between text-sm mb-3">
+                      <div className="flex justify-between text-xs mb-2.5">
                         <span className="text-white font-medium">Logical Deduction Speed</span>
                         <span className="text-indigo-400 font-bold">64%</span>
                       </div>
-                      <div className="w-full bg-slate-800 rounded-full h-2">
-                        <div className="bg-indigo-500 h-2 rounded-full relative" style={{ width: '64%' }}>
-                          <div className="absolute right-0 top-1/2 transform -translate-y-1/2 w-1.5 h-1.5 bg-white rounded-full mr-0.5 shadow-[0_0_5px_rgba(255,255,255,0.8)]" />
+                      <div className="w-full bg-slate-800 rounded-full h-1.5">
+                        <div className="bg-indigo-500 h-1.5 rounded-full relative" style={{ width: '64%' }}>
+                          <div className="absolute right-0 top-1/2 transform -translate-y-1/2 w-1.5 h-1.5 bg-white rounded-full mr-0 shadow-[0_0_5px_rgba(255,255,255,0.8)]" />
                         </div>
                       </div>
-                      <p className="text-xs text-slate-400 mt-3 flex items-center gap-1.5">
-                        <Sparkles className="w-3.5 h-3.5 text-indigo-400" /> 
+                      <p className="text-[10px] text-slate-400 mt-2.5 flex items-center gap-1.5">
+                        <Sparkles className="w-3 h-3 text-indigo-400" /> 
                         Gemini Insight: Work on syllogism patterns.
                       </p>
                     </div>
 
                     {/* Drill Recommendation */}
-                    <div className="pt-8 border-t border-slate-800/80 border-dashed">
-                      <span className="text-[10px] font-bold text-slate-500 tracking-wider uppercase block mb-4">
+                    <div className="pt-6 border-t border-slate-800/80 border-dashed">
+                      <span className="text-[9px] font-bold text-slate-500 tracking-wider uppercase block mb-3">
                         GEMINI RECOMMENDED DRILL
                       </span>
-                      <div className="bg-slate-800/40 border border-slate-700/50 hover:border-purple-500/50 p-4 rounded-xl flex items-start gap-4 cursor-pointer transition-colors duration-300 group">
-                        <div className="p-2.5 bg-purple-500/20 rounded-lg text-purple-400 group-hover:bg-purple-500 group-hover:text-white transition-colors">
-                          <FileText className="w-5 h-5" />
+                      <div className="bg-slate-800/40 border border-slate-700/50 hover:border-purple-500/50 p-3 rounded-xl flex items-start gap-3 cursor-pointer transition-colors duration-300 group">
+                        <div className="p-2 bg-purple-500/20 rounded-lg text-purple-400 group-hover:bg-purple-500 group-hover:text-white transition-colors">
+                          <FileText className="w-4 h-4" />
                         </div>
                         <div className="flex-1">
-                          <h5 className="text-white text-sm font-semibold mb-1 group-hover:text-purple-300 transition-colors">Advanced Matrix Reasoning 2.0</h5>
-                          <p className="text-xs text-slate-400">Video Guide • 12 mins</p>
+                          <h5 className="text-white text-xs font-semibold mb-0.5 group-hover:text-purple-300 transition-colors">Advanced Matrix Reasoning 2.0</h5>
+                          <p className="text-[10px] text-slate-400">Video Guide • 12 mins</p>
                         </div>
-                        <ExternalLink className="w-4 h-4 text-slate-500 group-hover:text-purple-400 transition-colors mt-1" />
+                        <ExternalLink className="w-3.5 h-3.5 text-slate-500 group-hover:text-purple-400 transition-colors mt-0.5" />
                       </div>
                     </div>
                   </div>
@@ -759,58 +759,60 @@ export default function HomePage() {
           </div>
 
           {/* Experience the AI Rigor (Question of the Day Card) */}
-          <div className="mb-8 max-w-7xl mx-auto animate-fade-in">
+          <div className="mb-8 max-w-5xl mx-auto animate-fade-in">
             <div className="bg-slate-900/40 backdrop-blur-xl border border-slate-800/60 rounded-3xl overflow-hidden shadow-2xl flex flex-col lg:flex-row">
               
               {/* Left Content Area */}
-              <div className="p-10 lg:p-10 lg:w-1/2 flex flex-col justify-center relative">
+              {/* NUDGED UP: Changed justify-center to justify-start and added pt-12 */}
+              <div className="p-8 pt-12 lg:p-10 lg:w-1/2 flex flex-col justify-start relative">
                 <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-indigo-500/5 to-transparent pointer-events-none" />
                 
-                <Badge className="w-fit mb-4 bg-indigo-500/20 text-indigo-300 border-indigo-500/30 px-4 py-1.5 font-semibold tracking-wide text-xs">
+                <Badge className="w-fit mb-4 bg-indigo-500/20 text-indigo-300 border-indigo-500/30 px-3 py-1 font-semibold tracking-wide text-[10px]">
                   QUESTION OF THE DAY
                 </Badge>
                 
-                <h2 className="text-3xl lg:text-4xl font-bold text-white mb-6">
+                <h2 className="text-2xl lg:text-3xl font-bold text-white mb-4">
                   Experience the AI Rigor
                 </h2>
                 
-                <p className="text-lg text-slate-400 mb-10 leading-relaxed">
+                <p className="text-base text-slate-400 mb-8 leading-relaxed">
                   Our questions aren't just from a bank. They are procedurally generated to match the specific difficulty curves of elite assessment providers like SHL, Kenexa, and Cubiks.
                 </p>
                 
-                <div className="flex flex-wrap items-center gap-4">
-                  <Button className="bg-indigo-600 hover:bg-indigo-500 text-white px-8 py-6 h-auto rounded-xl text-base font-semibold shadow-lg shadow-indigo-500/20 transition-all duration-300">
+                <div className="flex flex-wrap items-center gap-3">
+                  {/* REDUCED BUTTON SIZE: Changed px-8 py-6 to px-6 py-4 */}
+                  <Button className="bg-indigo-600 hover:bg-indigo-500 text-white px-6 py-4 h-auto rounded-xl text-sm font-semibold shadow-lg shadow-indigo-500/20 transition-all duration-300">
                     Try This Question
                   </Button>
-                  <Button variant="ghost" className="text-slate-300 hover:text-white hover:bg-slate-800/50 px-6 py-6 h-auto rounded-xl text-base font-semibold transition-all duration-300">
+                  <Button variant="ghost" className="text-slate-300 hover:text-white hover:bg-slate-800/50 px-4 py-4 h-auto rounded-xl text-sm font-semibold transition-all duration-300">
                     Explain Solution
                   </Button>
                 </div>
               </div>
 
               {/* Right Content Area (The Interactive Question UI) */}
-              <div className="p-6 lg:p-10 lg:w-1/2 bg-slate-950/40 border-l border-slate-800/50 flex items-center justify-center relative">
+              <div className="p-6 lg:p-8 lg:w-1/2 bg-slate-950/40 border-l border-slate-800/50 flex items-center justify-center relative">
                 <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-indigo-900/20 via-slate-950/0 to-slate-950/0 pointer-events-none" />
                 
-                <div className="bg-slate-900 border border-slate-700/50 rounded-2xl p-6 lg:p-8 w-full max-w-md shadow-2xl relative overflow-hidden transform transition-transform hover:scale-[1.02] duration-500">
+                {/* REDUCED PADDING: Changed p-6 lg:p-8 to p-5 lg:p-6 */}
+                <div className="bg-slate-900 border border-slate-700/50 rounded-2xl p-5 lg:p-6 w-full max-w-md shadow-2xl relative overflow-hidden transform transition-transform hover:scale-[1.02] duration-500">
                   {/* Card Header */}
-                  <div className="flex justify-between items-center mb-6">
-                    <span className="text-xs font-bold tracking-wider text-slate-400 uppercase">
+                  <div className="flex justify-between items-center mb-5">
+                    <span className="text-[10px] font-bold tracking-wider text-slate-400 uppercase">
                       Question #204 - Numerical
                     </span>
-                    <Badge variant="outline" className="text-slate-300 border-slate-600 bg-slate-800/50">
+                    <Badge variant="outline" className="text-slate-300 border-slate-600 bg-slate-800/50 text-[10px] px-2 py-0">
                       Hard
                     </Badge>
                   </div>
                   
                   {/* Question Prompt */}
-                  <p className="text-slate-200 text-lg mb-8 leading-relaxed font-medium">
+                  <p className="text-slate-200 text-sm mb-6 leading-relaxed font-medium">
                     If Company A's revenue grew by 15% in Q1 and declined by 8% in Q2, while its operating costs remained constant at 60% of original Q1 revenue, what is the net profit margin percentage at the end of Q2?
                   </p>
                   
                   {/* Options */}
-                  {/* Options */}
-                  <div className="space-y-2.5">
+                  <div className="space-y-2">
                     {['4.25%', '6.70%', '12.4%', '8.10%'].map((opt, i) => {
                       const isSelected = selectedQOTDOption === i;
                       
@@ -818,7 +820,7 @@ export default function HomePage() {
                         <div 
                           key={i} 
                           onClick={() => setSelectedQOTDOption(i)}
-                          className={`flex items-center justify-between p-3 rounded-xl border cursor-pointer transition-all duration-300 group ${
+                          className={`flex items-center justify-between p-2.5 rounded-xl border cursor-pointer transition-all duration-300 group ${
                             isSelected 
                               ? "border-indigo-500 bg-indigo-500/10 shadow-[0_0_15px_rgba(99,102,241,0.1)]" 
                               : "border-slate-700/50 bg-slate-800/30 hover:bg-slate-800/80 hover:border-indigo-500/50"
@@ -845,7 +847,6 @@ export default function HomePage() {
               </div>
             </div>
           </div>
-
 
           
           
