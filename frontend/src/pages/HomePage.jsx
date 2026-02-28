@@ -32,6 +32,12 @@ import {
   ArrowRight,
   GraduationCap,
   Briefcase,
+  Plus, 
+  Compass, 
+  Activity, 
+  FileText, 
+  ExternalLink,
+  Layers
 } from "lucide-react"
 
 export default function HomePage() {
@@ -46,22 +52,22 @@ export default function HomePage() {
   const [loadingProgress, setLoadingProgress] = useState(0)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 })
-  const [activeFeature, setActiveFeature] = useState(null)
+  const [selectedQOTDOption, setSelectedQOTDOption] = useState(null)
   const canvasRef = useRef(null)
 
   const companies = [
-    { id: "google", name: "Google", color: "from-blue-600 to-sky-500", icon: "🔍", category: "FAANG" },
-    { id: "microsoft", name: "Microsoft", color: "from-blue-700 to-cyan-600", icon: "🪟", category: "FAANG" },
-    { id: "amazon", name: "Amazon", color: "from-slate-700 to-slate-500", icon: "📦", category: "FAANG" },
-    { id: "apple", name: "Apple", color: "from-slate-800 to-slate-600", icon: "🍎", category: "FAANG" },
-    { id: "meta", name: "Meta", color: "from-blue-800 to-blue-600", icon: "👥", category: "FAANG" },
-    { id: "netflix", name: "Netflix", color: "from-slate-700 to-blue-700", icon: "🎬", category: "FAANG" },
-    { id: "tcs", name: "TCS", color: "from-blue-700 to-indigo-700", icon: "💼", category: "Service" },
-    { id: "wipro", name: "Wipro", color: "from-slate-600 to-blue-600", icon: "⚡", category: "Service" },
-    { id: "infosys", name: "Infosys", color: "from-blue-600 to-cyan-600", icon: "🌐", category: "Service" },
-    { id: "accenture", name: "Accenture", color: "from-indigo-700 to-blue-700", icon: "🎯", category: "Consulting" },
-    { id: "deloitte", name: "Deloitte", color: "from-emerald-700 to-teal-700", icon: "📊", category: "Consulting" },
-    { id: "cognizant", name: "Cognizant", color: "from-blue-700 to-indigo-600", icon: "🧠", category: "Service" },
+    { id: "google", name: "Google", color: "from-blue-600 to-sky-500",  category: "FAANG" },
+    { id: "microsoft", name: "Microsoft", color: "from-blue-700 to-cyan-600", category: "FAANG" },
+    { id: "amazon", name: "Amazon", color: "from-slate-700 to-slate-500",  category: "FAANG" },
+    { id: "apple", name: "Apple", color: "from-slate-800 to-slate-600",  category: "FAANG" },
+    { id: "meta", name: "Meta", color: "from-blue-800 to-blue-600",  category: "FAANG" },
+    { id: "netflix", name: "Netflix", color: "from-slate-700 to-blue-700",  category: "FAANG" },
+    { id: "tcs", name: "TCS", color: "from-blue-700 to-indigo-700",   category: "Service" },
+    { id: "wipro", name: "Wipro", color: "from-slate-600 to-blue-600",  category: "Service" },
+    { id: "infosys", name: "Infosys", color: "from-blue-600 to-cyan-600",  category: "Service" },
+    { id: "accenture", name: "Accenture", color: "from-indigo-700 to-blue-700",   category: "Consulting" },
+    { id: "deloitte", name: "Deloitte", color: "from-emerald-700 to-teal-700",   category: "Consulting" },
+    { id: "cognizant", name: "Cognizant", color: "from-blue-700 to-indigo-600",   category: "Service" },
   ]
 
   const filteredCompanies = companies.filter((company) =>
@@ -177,50 +183,7 @@ export default function HomePage() {
     navigate("/quiz")
   }
 
-  const features = [
-    {
-      icon: Brain,
-      title: "AI-Powered Feedback",
-      description: "Get personalized explanations with advanced AI that adapts to your learning style",
-      color: "from-blue-600 to-cyan-600",
-      stat: "95% accuracy",
-    },
-    {
-      icon: TrendingUp,
-      title: "Adaptive Difficulty",
-      description: "Questions dynamically adjust to match your skill level for optimal learning",
-      color: "from-emerald-600 to-teal-600",
-      stat: "3 levels",
-    },
-    {
-      icon: Building2,
-      title: "Company-Specific Tests",
-      description: "Practice with real interview questions from top tech companies",
-      color: "from-blue-700 to-indigo-700",
-      stat: "12+ companies",
-    },
-    {
-      icon: Award,
-      title: "Achievement System",
-      description: "Earn badges and unlock new challenges as you progress",
-      color: "from-amber-600 to-orange-600",
-      stat: "15+ badges",
-    },
-    {
-      icon: Clock,
-      title: "Timed Practice",
-      description: "Simulate real test conditions with smart time management",
-      color: "from-slate-600 to-slate-700",
-      stat: "Real-time",
-    },
-    {
-      icon: BarChart3,
-      title: "Detailed Analytics",
-      description: "Track your progress with comprehensive performance insights",
-      color: "from-indigo-600 to-blue-700",
-      stat: "100% tracked",
-    },
-  ]
+
 
   // Loading Screen
   if (isLoading) {
@@ -493,17 +456,11 @@ export default function HomePage() {
       {/* Main Content */}
       <main className="relative pt-32 pb-20 px-4 sm:px-6 lg:px-8" style={{ zIndex: 1 }}>
         <div className="max-w-7xl mx-auto">
-          {/* Hero Section */}
-          <div className="text-center mb-16">
-            <div className="inline-flex items-center gap-2 bg-gradient-to-r from-blue-600/10 to-sky-600/10 backdrop-blur-sm border border-blue-500/20 px-6 py-3 rounded-full mb-8 animate-fade-in">
-              <GraduationCap className="h-4 w-4 text-sky-400" />
-              <span className="text-sm font-medium text-slate-200">
-                Welcome, {user?.profile?.firstName || user?.username}
-              </span>
-            </div>
 
-            <div className="relative mb-8">
-              <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold text-white mb-6 animate-fade-in leading-tight">
+           {/* Hero Section */}
+          <div className="text-center mb-12">
+            <div className="relative mb-8 mt-8">
+              <h1 className="text-xl sm:text-6xl lg:text-7xl font-bold text-white mb-6 animate-fade-in leading-tight">
                 Professional Career
                 <br />
                 <span className="relative inline-block">
@@ -538,34 +495,29 @@ export default function HomePage() {
                   </svg>
                 </span>
               </h1>
+              <style>{`
+                @keyframes drawLine {
+                  to { stroke-dashoffset: 0; }
+                }
+              `}</style>
             </div>
 
-            <style>{`
-              @keyframes drawLine {
-                to { stroke-dashoffset: 0; }
-              }
-            `}</style>
-
-            <p className="text-xl text-slate-300 mb-12 max-w-3xl mx-auto leading-relaxed animate-fade-in">
-              Enhance your career readiness with AI-powered assessments, adaptive learning, and comprehensive analytics tailored for corporate success.
-            </p>
+            <span className="text-lg text-slate-300 mb-12 max-w-3xl mx-auto leading-relaxed animate-fade-in ">
+              Land your dream offer with AI-powered assessments modeled after Deloitte, Accenture, and Google.
+              <br />Get real-time feedback and comprehensive analytics tailored for corporate success.
+            </span>
           </div>
 
-          {/* Company Selection */}
+          {/* Company Selection - Horizontal bar (Full Width Restored) */}
           <div className="mb-12">
-            <div className="bg-slate-900/50 backdrop-blur-xl border border-slate-800/50 rounded-3xl p-8 shadow-2xl">
-              <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-8 gap-4">
-                <div className="text-left">
-                  <h3 className="text-2xl font-bold text-white flex items-center gap-3 mb-2">
-                    <div className="p-2 bg-gradient-to-br from-blue-600 to-sky-500 rounded-lg">
-                      <Building2 className="h-5 w-5 text-white" />
-                    </div>
-                    Select Target Organization
-                  </h3>
-                  <p className="text-sm text-slate-400">
-                    Choose from leading companies or specify your preference
-                  </p>
-                </div>
+            <div className="bg-slate-900/50 backdrop-blur-xl border border-slate-800/50 rounded-2xl p-6 shadow-2xl">
+              
+              {/* Top Row: Title & Search */}
+              <div className="flex flex-col md:flex-row items-center justify-between gap-4 mb-6">
+                <h3 className="text-xl font-bold text-white flex items-center gap-3">
+                  <Building2 className="h-6 w-6 text-sky-400" />
+                  Target Organization
+                </h3>
 
                 <div className="relative w-full md:w-80">
                   <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
@@ -574,13 +526,14 @@ export default function HomePage() {
                     placeholder="Search organizations..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full pl-11 pr-4 py-3 bg-slate-800/50 border border-slate-700/50 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all"
+                    className="w-full pl-11 pr-4 py-2.5 bg-slate-800/80 border border-slate-700/50 rounded-full text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all text-sm shadow-inner"
                   />
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4 mb-6">
-                {filteredCompanies.map((company, index) => (
+              {/* Bottom Row: Horizontal Scrollable Pills */}
+              <div className="flex items-center gap-3 overflow-x-auto pb-2 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+                {filteredCompanies.map((company) => (
                   <button
                     key={company.id}
                     onClick={() => {
@@ -588,94 +541,39 @@ export default function HomePage() {
                       setCustomCompany("")
                       setShowCustomInput(false)
                     }}
-                    className={`group relative p-6 rounded-2xl border-2 transition-all duration-500 hover:scale-105 overflow-hidden ${
+                    className={`flex-shrink-0 px-6 py-2.5 rounded-full text-sm font-semibold transition-all duration-300 flex items-center gap-2 border ${
                       selectedCompany === company.id
-                        ? "border-transparent shadow-2xl shadow-blue-500/30 scale-105"
-                        : "border-slate-700/50 hover:border-slate-600/50"
+                        ? "bg-gradient-to-r from-blue-600 to-sky-500 text-white border-transparent shadow-lg shadow-blue-500/30"
+                        : "bg-slate-800/50 text-slate-300 border-slate-700/50 hover:bg-slate-700 hover:text-white"
                     }`}
-                    style={{
-                      animation: `slideUp 0.5s ease-out ${index * 0.05}s backwards`,
-                    }}
                   >
-                    <div
-                      className={`absolute inset-0 bg-gradient-to-br ${company.color} transition-opacity duration-300 ${
-                        selectedCompany === company.id ? "opacity-100" : "opacity-0 group-hover:opacity-10"
-                      }`}
-                    />
-
-                    <div className="relative z-10 text-center">
-                      <div className="text-4xl mb-3 transform group-hover:scale-110 transition-transform duration-300">
-                        {company.icon}
-                      </div>
-                      <div
-                        className={`font-bold text-sm mb-2 ${
-                          selectedCompany === company.id ? "text-white" : "text-slate-200"
-                        }`}
-                      >
-                        {company.name}
-                      </div>
-                      <Badge
-                        variant="secondary"
-                        className={`text-xs ${
-                          selectedCompany === company.id
-                            ? "bg-white/20 text-white border-white/30"
-                            : "bg-slate-800 text-slate-400 border-slate-700"
-                        }`}
-                      >
-                        {company.category}
-                      </Badge>
-                    </div>
-
-                    {selectedCompany === company.id && (
-                      <div className="absolute top-3 right-3 z-20">
-                        <div className="w-6 h-6 bg-white rounded-full flex items-center justify-center animate-scale-in shadow-lg">
-                          <CheckCircle2 className="h-4 w-4 text-blue-600" />
-                        </div>
-                      </div>
-                    )}
-
-                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
+                    {company.name}
+                    {selectedCompany === company.id && <CheckCircle2 className="h-4 w-4" />}
                   </button>
                 ))}
 
+                {/* "Other" Custom Button */}
                 <button
                   onClick={() => {
                     setShowCustomInput(!showCustomInput)
                     setSelectedCompany(null)
                   }}
-                  className={`group relative p-6 rounded-2xl border-2 border-dashed transition-all duration-500 hover:scale-105 ${
+                  className={`flex-shrink-0 px-6 py-2.5 rounded-full text-sm font-semibold transition-all duration-300 flex items-center gap-2 border border-dashed ${
                     showCustomInput
-                      ? "border-blue-500 bg-blue-500/10"
-                      : "border-slate-700 hover:border-slate-600"
+                      ? "border-blue-500 bg-blue-500/10 text-white"
+                      : "border-slate-600 text-slate-400 hover:border-slate-500 hover:text-white"
                   }`}
                 >
-                  <div className="relative z-10 text-center">
-                    <div className="text-4xl mb-3 transform group-hover:rotate-90 transition-transform duration-500">
-                      ➕
-                    </div>
-                    <div className="font-bold text-sm text-slate-200 mb-2">Other</div>
-                    <Badge variant="secondary" className="text-xs bg-slate-800 text-slate-400 border-slate-700">
-                      Custom
-                    </Badge>
-                  </div>
+                  <Plus className="h-4 w-4" />
+                  Other
                 </button>
               </div>
 
-              <style>{`
-                @keyframes slideUp {
-                  from { opacity: 0; transform: translateY(20px); }
-                  to { opacity: 1; transform: translateY(0); }
-                }
-                @keyframes scale-in {
-                  from { transform: scale(0); }
-                  to { transform: scale(1); }
-                }
-              `}</style>
-
+              {/* Custom Input Field Reveal */}
               {showCustomInput && (
-                <div className="mb-6 animate-slide-down">
+                <div className="mt-6 animate-slide-down">
                   <div className="bg-slate-800/50 backdrop-blur-sm rounded-xl p-6 border border-slate-700/50">
-                    <label className="block text-sm font-medium text-slate-300 mb-3 items-center gap-2">
+                    <label className="flex items-center gap-2 text-sm font-medium text-slate-300 mb-3">
                       <Briefcase className="h-4 w-4 text-sky-400" />
                       Specify Your Target Organization
                     </label>
@@ -687,7 +585,7 @@ export default function HomePage() {
                       className="w-full px-4 py-3 bg-slate-900/50 border border-slate-700/50 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all"
                     />
                     {customCompany && (
-                      <div className="mt-3 flex items-start gap-2 text-sm">
+                      <div className="mt-3 flex items-start gap-2 text-sm animate-fade-in">
                         <CheckCircle2 className="h-5 w-5 text-emerald-500 flex-shrink-0 mt-0.5" />
                         <p className="text-emerald-400">
                           Assessment will be customized based on {customCompany}'s recruitment patterns
@@ -697,145 +595,261 @@ export default function HomePage() {
                   </div>
                 </div>
               )}
-
-              {!selectedCompany && !customCompany && (
-                <div className="text-center">
-                  <p className="text-sm text-slate-400 flex items-center justify-center gap-2">
-                    <Target className="h-4 w-4" />
-                    Select an organization for targeted preparation or proceed with general assessment
-                  </p>
-                </div>
-              )}
             </div>
           </div>
+              {/* Difficulty Section (Styled like "Assessment Categories") */}
+          <div className="mb-20 max-w-7xl mx-auto">
+            {/* Header Area matching the inspiration image */}
+            <div className="flex flex-col md:flex-row items-end justify-between mb-10">
+              <div>
+                <div className="flex items-center gap-3 mb-6 mt-5">
+          
+            <Layers className="h-5 w-5 text-sky-400" />
+          
+          
+          <h3 className="text-2xl font-bold text-white">Select Difficulty Level</h3>
+        </div> 
+                <p className="text-slate-400 max-w-2xl">
+                  Expertly crafted test modules covering foundational to advanced scenarios required by top employers.
+                </p>
+              </div>
+              
+              {/* "View Analytics" moved here to match "View All Modules ->" */}
+              <button 
+                onClick={() => navigate("/progress")}
+                className="mt-6 md:mt-0 flex items-center gap-2 text-sm font-semibold text-blue-400 hover:text-blue-300 transition-colors"
+              >
+                View Analytics <ArrowRight className="h-4 w-4" />
+              </button>
+            </div>
 
-          {/* Difficulty */}
-          <div className="mb-12 max-w-4xl mx-auto">
+            {/* Difficulty Cards */}
             <AdaptiveDifficultySelector
               selectedDifficulty={selectedDifficulty}
               onDifficultySelect={setSelectedDifficulty}
+              onStartTest={handleStartTest} 
             />
           </div>
 
-          {/* CTA */}
-          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-16">
-            <Button
-              size="lg"
-              onClick={handleStartTest}
-              className="relative group text-lg px-10 py-7 h-auto bg-gradient-to-r from-blue-600 to-sky-600 hover:from-blue-500 hover:to-sky-500 text-white font-semibold rounded-xl shadow-2xl shadow-blue-500/40 transition-all duration-300 overflow-hidden"
-            >
-              <div className="absolute inset-0 bg-gradient-to-r from-sky-600 to-blue-700 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-              <div className="relative flex items-center gap-3">
-                <Zap className="h-6 w-6 group-hover:scale-110 transition-transform duration-300" />
-                Begin Assessment
-                <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform duration-300" />
-              </div>
-            </Button>
-
-            <Button
-              variant="outline"
-              size="lg"
-              onClick={() => navigate("/progress")}
-              className="text-lg px-10 py-7 h-auto bg-slate-800/50 backdrop-blur-sm border-2 border-slate-700/50 text-white hover:bg-slate-700/50 hover:border-slate-600/50 rounded-xl transition-all duration-300 group"
-            >
-              <TrendingUp className="h-5 w-5 mr-2 group-hover:-translate-y-1 transition-transform duration-300" />
-              View Analytics
-            </Button>
-          </div>
-
           {/* Features */}
-          <div className="mb-20">
-            <div className="text-center mb-12">
-              <Badge className="mb-4 bg-blue-600/20 text-blue-300 border-blue-500/30 px-4 py-1.5">
-                Platform Features
-              </Badge>
-              <h2 className="text-4xl font-bold text-white mb-4">
-                Enterprise-Grade Assessment Tools
-              </h2>
-              <p className="text-lg text-slate-400 max-w-2xl mx-auto">
-                Leverage advanced technology and data-driven insights for optimal career preparation
-              </p>
-            </div>
+          
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {features.map((feature, index) => (
-                <Card
-                  key={index}
-                  onMouseEnter={() => setActiveFeature(index)}
-                  onMouseLeave={() => setActiveFeature(null)}
-                  className={`group relative bg-slate-900/50 backdrop-blur-xl border-slate-800/50 hover:border-slate-700/50 transition-all duration-500 overflow-hidden cursor-pointer ${
-                    activeFeature === index ? "scale-105 shadow-2xl shadow-blue-500/10" : ""
-                  }`}
-                  style={{
-                    animation: `fadeInUp 0.5s ease-out ${index * 0.1}s backwards`,
-                  }}
-                >
-                  <div
-                    className={`absolute inset-0 bg-gradient-to-br ${feature.color} opacity-0 group-hover:opacity-10 transition-opacity duration-500`}
-                  />
-
-                  <div className="absolute inset-0 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-500">
-                    <div
-                      className={`absolute inset-0 bg-gradient-to-r ${feature.color} opacity-10 blur-xl`}
-                    />
-                  </div>
-
-                  <CardHeader className="pb-4 relative z-10">
-                    <div className="flex items-start justify-between mb-4">
-                      <div
-                        className={`p-3 bg-gradient-to-br ${feature.color} rounded-xl shadow-lg group-hover:scale-110 transition-all duration-500`}
-                      >
-                        <feature.icon className="h-6 w-6 text-white" />
-                      </div>
-                      <Badge variant="secondary" className="bg-slate-800/80 text-slate-400 border-slate-700/50">
-                        {feature.stat}
-                      </Badge>
+          
+          {/* Gemini-Powered Intelligence Card */}
+          <div className="mb-24 max-w-5xl mx-auto animate-fade-in" style={{ animationDelay: "0.2s" }}>
+            <div className="bg-slate-900/40 backdrop-blur-xl border border-slate-800/60 rounded-3xl overflow-hidden shadow-2xl flex flex-col lg:flex-row-reverse">
+              
+              {/* Left Content Area (Reversed to sit on the Right) */}
+              <div className="p-8 lg:p-10 lg:w-1/2 flex flex-col justify-center relative">
+                <div className="absolute top-0 right-0 w-full h-full bg-gradient-to-bl from-purple-500/5 to-transparent pointer-events-none" />
+                
+                <Badge className="w-fit mb-4 bg-purple-500/20 text-purple-300 border-purple-500/30 px-3 py-1 font-semibold tracking-wide text-[10px]">
+                  Simple & Powerful
+                </Badge>
+                
+                <h2 className="text-2xl lg:text-3xl font-bold text-white mb-4">
+                  Gemini-Powered Intelligence
+                </h2>
+                
+                <p className="text-base text-slate-400 mb-8 leading-relaxed">
+                  Rather than relying on a mix of secondary algorithms, we chose a direct, streamlined integration with Google Gemini. This ensures your assessments are evaluated with pure, world-class reasoning.
+                </p>
+                
+                {/* 2 Key Points */}
+                <div className="space-y-6 mb-8">
+                  <div className="flex gap-3">
+                    <div className="mt-1 w-6 h-6 rounded-full bg-purple-500/20 flex items-center justify-center shrink-0 border border-purple-500/30">
+                      <CheckCircle2 className="w-3.5 h-3.5 text-purple-400" />
                     </div>
-                    <CardTitle className="text-xl text-white group-hover:text-sky-400 transition-colors duration-300">
-                      {feature.title}
-                    </CardTitle>
-                  </CardHeader>
-
-                  <CardContent className="relative z-10">
-                    <CardDescription className="text-base text-slate-400 leading-relaxed">
-                      {feature.description}
-                    </CardDescription>
-                  </CardContent>
-
-                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
-                </Card>
-              ))}
-            </div>
-
-            <style>{`
-              @keyframes fadeInUp {
-                from { opacity: 0; transform: translateY(30px); }
-                to { opacity: 1; transform: translateY(0); }
-              }
-            `}</style>
-          </div>
-
-          {/* Stats */}
-          <div className="bg-gradient-to-r from-blue-900/20 to-sky-900/20 backdrop-blur-xl border border-slate-800/50 rounded-3xl p-12">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
-              {[
-                { value: "10K+", label: "Active Users", icon: "👥" },
-                { value: "12+", label: "Companies", icon: "🏢" },
-                { value: "95%", label: "Success Rate", icon: "📈" },
-                { value: "24/7", label: "Support", icon: "💬" },
-              ].map((stat, index) => (
-                <div key={index} className="group">
-                  <div className="text-5xl mb-3 transform group-hover:scale-110 transition-transform duration-300">
-                    {stat.icon}
+                    <div>
+                      <h4 className="text-white font-semibold text-base mb-1">Dynamic Gemini Reasoning</h4>
+                      <p className="text-slate-400 text-xs leading-relaxed">Leverage the native logic and semantic understanding of Google Gemini to analyze your complex answers without middle-ware interference.</p>
+                    </div>
                   </div>
-                  <div className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-sky-400 to-blue-500 mb-2">
-                    {stat.value}
+                  <div className="flex gap-3">
+                    <div className="mt-1 w-6 h-6 rounded-full bg-purple-500/20 flex items-center justify-center shrink-0 border border-purple-500/30">
+                      <CheckCircle2 className="w-3.5 h-3.5 text-purple-400" />
+                    </div>
+                    <div>
+                      <h4 className="text-white font-semibold text-base mb-1">Personalized Gemini Roadmap</h4>
+                      <p className="text-slate-400 text-xs leading-relaxed">Receive a learning plan synthesized directly from Gemini's analysis of your cognitive gaps in real-time.</p>
+                    </div>
                   </div>
-                  <div className="text-sm text-slate-400 font-medium">{stat.label}</div>
                 </div>
-              ))}
+
+                {/* REDUCED BUTTON SIZE: Changed px-8 py-6 to px-6 py-4 */}
+                <Button 
+                  onClick={() => navigate('/progress')} 
+                  className="w-fit bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white px-6 py-4 h-auto rounded-xl text-sm font-semibold shadow-lg shadow-purple-500/20 flex items-center gap-2 transition-all duration-300 group"
+                >
+                  <Sparkles className="w-4 h-4 group-hover:scale-110 transition-transform" />
+                  Get Gemini Report
+                </Button>
+              </div>
+              
+              {/* Right Content Area (The Professional Analytics UI Dashboard) */}
+              <div className="p-6 lg:p-8 lg:w-1/2 bg-slate-950/40 border-r border-slate-800/50 flex items-center justify-center relative">
+                <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-purple-900/20 via-slate-950/0 to-slate-950/0 pointer-events-none" />
+                
+                <div className="bg-slate-900 border border-slate-700/50 rounded-2xl w-full max-w-md shadow-2xl overflow-hidden transform transition-transform hover:-translate-y-1 duration-500">
+                  
+                  {/* Dashboard Header */}
+                  <div className="bg-gradient-to-r from-purple-600 to-indigo-600 p-4 flex items-center justify-between">
+                    <div className="flex items-center gap-2 text-white font-bold text-xs tracking-wide">
+                      <Sparkles className="w-3.5 h-3.5" />
+                      GEMINI PERFORMANCE ANALYSIS
+                    </div>
+                    <Badge className="bg-white/20 text-white border-none hover:bg-white/20 text-[8px] tracking-wider px-1.5">
+                      GEMINI-1.5-PRO
+                    </Badge>
+                  </div>
+                  
+                  {/* Dashboard Body */}
+                  <div className="p-5 lg:p-6 space-y-6">
+                    {/* Progress Bar 1 */}
+                    <div>
+                      <div className="flex justify-between text-xs mb-2.5">
+                        <span className="text-white font-medium">Complex Data Interpretation</span>
+                        <span className="text-purple-400 font-bold">92%</span>
+                      </div>
+                      <div className="w-full bg-slate-800 rounded-full h-1.5">
+                        <div className="bg-purple-500 h-1.5 rounded-full relative" style={{ width: '92%' }}>
+                          <div className="absolute right-0 top-1/2 transform -translate-y-1/2 w-1.5 h-1.5 bg-white rounded-full mr-0 shadow-[0_0_5px_rgba(255,255,255,0.8)]" />
+                        </div>
+                      </div>
+                    </div>
+                    
+                    {/* Progress Bar 2 */}
+                    <div>
+                      <div className="flex justify-between text-xs mb-2.5">
+                        <span className="text-white font-medium">Logical Deduction Speed</span>
+                        <span className="text-indigo-400 font-bold">64%</span>
+                      </div>
+                      <div className="w-full bg-slate-800 rounded-full h-1.5">
+                        <div className="bg-indigo-500 h-1.5 rounded-full relative" style={{ width: '64%' }}>
+                          <div className="absolute right-0 top-1/2 transform -translate-y-1/2 w-1.5 h-1.5 bg-white rounded-full mr-0 shadow-[0_0_5px_rgba(255,255,255,0.8)]" />
+                        </div>
+                      </div>
+                      <p className="text-[10px] text-slate-400 mt-2.5 flex items-center gap-1.5">
+                        <Sparkles className="w-3 h-3 text-indigo-400" /> 
+                        Gemini Insight: Work on syllogism patterns.
+                      </p>
+                    </div>
+
+                    {/* Drill Recommendation */}
+                    <div className="pt-6 border-t border-slate-800/80 border-dashed">
+                      <span className="text-[9px] font-bold text-slate-500 tracking-wider uppercase block mb-3">
+                        GEMINI RECOMMENDED DRILL
+                      </span>
+                      <div className="bg-slate-800/40 border border-slate-700/50 hover:border-purple-500/50 p-3 rounded-xl flex items-start gap-3 cursor-pointer transition-colors duration-300 group">
+                        <div className="p-2 bg-purple-500/20 rounded-lg text-purple-400 group-hover:bg-purple-500 group-hover:text-white transition-colors">
+                          <FileText className="w-4 h-4" />
+                        </div>
+                        <div className="flex-1">
+                          <h5 className="text-white text-xs font-semibold mb-0.5 group-hover:text-purple-300 transition-colors">Advanced Matrix Reasoning 2.0</h5>
+                          <p className="text-[10px] text-slate-400">Video Guide • 12 mins</p>
+                        </div>
+                        <ExternalLink className="w-3.5 h-3.5 text-slate-500 group-hover:text-purple-400 transition-colors mt-0.5" />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
+
+          {/* Experience the AI Rigor (Question of the Day Card) */}
+          <div className="mb-8 max-w-5xl mx-auto animate-fade-in">
+            <div className="bg-slate-900/40 backdrop-blur-xl border border-slate-800/60 rounded-3xl overflow-hidden shadow-2xl flex flex-col lg:flex-row">
+              
+              {/* Left Content Area */}
+              {/* NUDGED UP: Changed justify-center to justify-start and added pt-12 */}
+              <div className="p-8 pt-12 lg:p-10 lg:w-1/2 flex flex-col justify-start relative">
+                <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-indigo-500/5 to-transparent pointer-events-none" />
+                
+                <Badge className="w-fit mb-4 bg-indigo-500/20 text-indigo-300 border-indigo-500/30 px-3 py-1 font-semibold tracking-wide text-[10px]">
+                  QUESTION OF THE DAY
+                </Badge>
+                
+                <h2 className="text-2xl lg:text-3xl font-bold text-white mb-4">
+                  Experience the AI Rigor
+                </h2>
+                
+                <p className="text-base text-slate-400 mb-8 leading-relaxed">
+                  Our questions aren't just from a bank. They are procedurally generated to match the specific difficulty curves of elite assessment providers like SHL, Kenexa, and Cubiks.
+                </p>
+                
+                <div className="flex flex-wrap items-center gap-3">
+                  {/* REDUCED BUTTON SIZE: Changed px-8 py-6 to px-6 py-4 */}
+                  <Button className="bg-indigo-600 hover:bg-indigo-500 text-white px-6 py-4 h-auto rounded-xl text-sm font-semibold shadow-lg shadow-indigo-500/20 transition-all duration-300">
+                    Try This Question
+                  </Button>
+                  <Button variant="ghost" className="text-slate-300 hover:text-white hover:bg-slate-800/50 px-4 py-4 h-auto rounded-xl text-sm font-semibold transition-all duration-300">
+                    Explain Solution
+                  </Button>
+                </div>
+              </div>
+
+              {/* Right Content Area (The Interactive Question UI) */}
+              <div className="p-6 lg:p-8 lg:w-1/2 bg-slate-950/40 border-l border-slate-800/50 flex items-center justify-center relative">
+                <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-indigo-900/20 via-slate-950/0 to-slate-950/0 pointer-events-none" />
+                
+                {/* REDUCED PADDING: Changed p-6 lg:p-8 to p-5 lg:p-6 */}
+                <div className="bg-slate-900 border border-slate-700/50 rounded-2xl p-5 lg:p-6 w-full max-w-md shadow-2xl relative overflow-hidden transform transition-transform hover:scale-[1.02] duration-500">
+                  {/* Card Header */}
+                  <div className="flex justify-between items-center mb-5">
+                    <span className="text-[10px] font-bold tracking-wider text-slate-400 uppercase">
+                      Question #204 - Numerical
+                    </span>
+                    <Badge variant="outline" className="text-slate-300 border-slate-600 bg-slate-800/50 text-[10px] px-2 py-0">
+                      Hard
+                    </Badge>
+                  </div>
+                  
+                  {/* Question Prompt */}
+                  <p className="text-slate-200 text-sm mb-6 leading-relaxed font-medium">
+                    If Company A's revenue grew by 15% in Q1 and declined by 8% in Q2, while its operating costs remained constant at 60% of original Q1 revenue, what is the net profit margin percentage at the end of Q2?
+                  </p>
+                  
+                  {/* Options */}
+                  <div className="space-y-2">
+                    {['4.25%', '6.70%', '12.4%', '8.10%'].map((opt, i) => {
+                      const isSelected = selectedQOTDOption === i;
+                      
+                      return (
+                        <div 
+                          key={i} 
+                          onClick={() => setSelectedQOTDOption(i)}
+                          className={`flex items-center justify-between p-2.5 rounded-xl border cursor-pointer transition-all duration-300 group ${
+                            isSelected 
+                              ? "border-indigo-500 bg-indigo-500/10 shadow-[0_0_15px_rgba(99,102,241,0.1)]" 
+                              : "border-slate-700/50 bg-slate-800/30 hover:bg-slate-800/80 hover:border-indigo-500/50"
+                          }`}
+                        >
+                          <span className={`text-sm font-medium transition-colors ${
+                            isSelected ? "text-white" : "text-slate-300 group-hover:text-white"
+                          }`}>
+                            {opt}
+                          </span>
+                          
+                          {/* Radio Button Circle */}
+                          <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center transition-colors ${
+                            isSelected ? "border-indigo-500" : "border-slate-600 group-hover:border-indigo-400"
+                          }`}>
+                            {/* Inner filled dot when selected */}
+                            {isSelected && <div className="w-2 h-2 rounded-full bg-indigo-500 animate-scale-in" />}
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          
+          
         </div>
       </main>
 
