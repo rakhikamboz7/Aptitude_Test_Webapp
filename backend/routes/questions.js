@@ -22,9 +22,10 @@ router.post("/generate", async (req, res) => {
       })
     }
 
-    const companyContext = company && company !== "general" 
-      ? `Focus on ${company.toUpperCase()}-style questions that match their typical assessment patterns.`
-      : ""
+    const companyContext =
+      company && company !== "general"
+        ? `Focus on ${company.toUpperCase()}-style questions that match their typical assessment patterns.`
+        : ""
 
     const prompt = `Generate exactly 15 aptitude test questions for ${difficulty} difficulty level covering these topics: ${topics.join(", ")}.
 
@@ -55,19 +56,17 @@ Return format:
 IMPORTANT: 
 - Return ONLY the JSON array, no markdown, no code blocks, no extra text
 - Keep all text on single lines (no line breaks in strings)
-- Use simple quotes or escape quotes properly
+- Do NOT use apostrophes or quotes inside string values
 - Ensure all JSON is valid and parseable`
-
-    const controller = new AbortController()
-    const timeoutId = setTimeout(() => controller.abort(), 30000)
 
     try {
       const completion = await groq.chat.completions.create({
         model: "llama-3.3-70b-versatile",
         messages: [
-          { 
-            role: "system", 
-            content: "You are a question generator that outputs ONLY valid JSON arrays. Never use markdown formatting. Never include line breaks in strings. Always escape special characters properly." 
+          {
+            role: "system",
+            content:
+              "You are a question generator that outputs ONLY valid JSON arrays. Never use markdown formatting. Never include line breaks inside string values. Never use apostrophes or quotation marks inside string values - rephrase to avoid them. Always output raw JSON only.",
           },
           { role: "user", content: prompt },
         ],
@@ -75,63 +74,60 @@ IMPORTANT:
         max_tokens: 4000,
       })
 
-      clearTimeout(timeoutId)
-
       const generatedText = completion.choices[0]?.message?.content || ""
       console.log("Generated text length:", generatedText.length)
 
-      // Clean the text before parsing
+      // ✅ FIXED: Clean the text safely without breaking JSON structure
       let cleanedText = generatedText.trim()
-      
-      // Remove markdown code blocks if present
-      cleanedText = cleanedText.replace(/```json\s*/g, "").replace(/```\s*/g, "")
-      
-      // Remove any text before the first [ and after the last ]
+
+      // Step 1: Remove markdown code fences
+      cleanedText = cleanedText.replace(/```json\s*/gi, "").replace(/```\s*/g, "")
+
+      // Step 2: Extract just the JSON array
       const startIndex = cleanedText.indexOf("[")
       const endIndex = cleanedText.lastIndexOf("]")
-      
+
       if (startIndex === -1 || endIndex === -1) {
         throw new Error("No valid JSON array found in response")
       }
-      
+
       cleanedText = cleanedText.substring(startIndex, endIndex + 1)
-      
-      // Fix common JSON issues
+
+      // Step 3: Only remove control characters that break JSON - DO NOT touch quotes or backslashes
       cleanedText = cleanedText
-        .replace(/\n/g, " ")           // Replace newlines with spaces
-        .replace(/\r/g, "")            // Remove carriage returns
-        .replace(/\t/g, " ")           // Replace tabs with spaces
-        .replace(/\\/g, "\\\\")        // Escape backslashes (but not already escaped)
-        .replace(/\\\\"/g, '\\"')      // Fix over-escaped quotes
-        .replace(/([^\\])"/g, '$1\\"') // Escape unescaped quotes in strings (simple approach)
-      
+        .replace(/\r\n/g, " ")   // Windows line endings → space
+        .replace(/\n/g, " ")     // Unix line endings → space
+        .replace(/\r/g, " ")     // Old Mac line endings → space
+        .replace(/\t/g, " ")     // Tabs → space
+        .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, "") // Remove other control chars
+
       console.log("Attempting to parse cleaned JSON...")
+      console.log("Sample:", cleanedText.substring(0, 300))
 
       let questions
       try {
         questions = JSON.parse(cleanedText)
       } catch (parseError) {
         console.error("JSON Parse Error:", parseError.message)
-        console.error("Cleaned text sample:", cleanedText.substring(0, 500))
-        
-        // Try a more aggressive cleaning approach
-        console.log("Trying aggressive cleaning...")
-        
-        // Try to fix control characters
-        cleanedText = cleanedText.replace(/[\x00-\x1F\x7F-\x9F]/g, "")
-        
-        questions = JSON.parse(cleanedText)
+        console.error("Text around error position:", cleanedText.substring(0, 500))
+
+        // Last resort: try to extract individual question objects using a regex-free approach
+        // Re-request with stricter prompt if first attempt fails
+        throw new Error(`JSON parsing failed: ${parseError.message}`)
       }
 
-      if (!Array.isArray(questions) || questions.length !== 15) {
-        throw new Error(`Expected 15 questions, got ${questions?.length || 0}`)
+      if (!Array.isArray(questions)) {
+        throw new Error("Response is not a JSON array")
+      }
+
+      if (questions.length < 10) {
+        throw new Error(`Too few questions generated: got ${questions.length}, expected 15`)
       }
 
       // Validate and normalize each question
-      const validatedQuestions = questions.map((q, index) => {
-        // Ensure correctAnswer is uppercase and a single letter
+      const validatedQuestions = questions.slice(0, 15).map((q, index) => {
         const correctAnswer = String(q.correctAnswer || "A").toUpperCase().trim()
-        
+
         if (!["A", "B", "C", "D"].includes(correctAnswer)) {
           console.warn(`Question ${index + 1} has invalid correctAnswer: ${correctAnswer}, defaulting to A`)
         }
@@ -139,8 +135,8 @@ IMPORTANT:
         return {
           id: index + 1,
           question: String(q.question || "").trim(),
-          options: Array.isArray(q.options) 
-            ? q.options.map(opt => String(opt || "").trim()).slice(0, 4)
+          options: Array.isArray(q.options)
+            ? q.options.map((opt) => String(opt || "").trim()).slice(0, 4)
             : ["Option A", "Option B", "Option C", "Option D"],
           correctAnswer: ["A", "B", "C", "D"].includes(correctAnswer) ? correctAnswer : "A",
           explanation: String(q.explanation || "").trim(),
@@ -151,7 +147,7 @@ IMPORTANT:
         }
       })
 
-      console.log("Questions validated successfully")
+      console.log(`✅ ${validatedQuestions.length} questions validated successfully`)
       console.log("Sample question:", validatedQuestions[0])
 
       const sessionId = Date.now().toString()
@@ -162,12 +158,11 @@ IMPORTANT:
           questions: validatedQuestions,
           sessionId,
           difficulty,
-          totalQuestions: 15,
-          timeLimit: 25 * 60, // 25 minutes in seconds
+          totalQuestions: validatedQuestions.length,
+          timeLimit: 25 * 60,
         },
       })
     } catch (error) {
-      clearTimeout(timeoutId)
       if (error.name === "AbortError") {
         throw new Error("Question generation timeout - please try again")
       }
@@ -175,7 +170,6 @@ IMPORTANT:
     }
   } catch (error) {
     console.error("Generate questions error:", error.message)
-    console.error("Error stack:", error.stack)
     res.status(500).json({
       success: false,
       message: "Failed to generate questions",
