@@ -1,8 +1,10 @@
-import React, { useState, useEffect } from "react"
+import React, { useState, useEffect, useRef } from "react"
 import { useNavigate } from "react-router-dom"
 import { Button } from "../components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/card"
 import { Badge } from "../components/ui/badge"
+import { Navigation } from "../components/navigation"
+
 import {
   Brain,
   Calendar,
@@ -17,8 +19,6 @@ import {
   Target,
   BookOpen,
   BarChart3,
-  ChevronDown,
-  ChevronRight,
   ArrowRight,
   Zap,
   Trophy,
@@ -35,8 +35,10 @@ export default function AssessmentsPage() {
   const [filteredAssessments, setFilteredAssessments] = useState([])
   const [searchQuery, setSearchQuery] = useState("")
   const [activeFilter, setActiveFilter] = useState("all") // all, completed, active, draft
-  const [expandedGroups, setExpandedGroups] = useState(new Set(["recent"]))
+  
+  const listContainerRef = useRef(null) // Added ref for smart scrolling
   const [isLoading, setIsLoading] = useState(true)
+  
   const [stats, setStats] = useState({
     total: 0,
     completed: 0,
@@ -55,9 +57,6 @@ export default function AssessmentsPage() {
   const fetchAssessments = async () => {
     try {
       setIsLoading(true)
-      // Simulated data - replace with actual API call
-      // const response = await fetch(`/api/test-results?userId=${user._id}`)
-      // const data = await response.json()
 
       // Mock data for demonstration
       const mockAssessments = [
@@ -183,45 +182,35 @@ export default function AssessmentsPage() {
     setFilteredAssessments(filtered)
   }
 
-  const toggleGroup = (groupName) => {
-    const newExpanded = new Set(expandedGroups)
-    if (newExpanded.has(groupName)) {
-      newExpanded.delete(groupName)
-    } else {
-      newExpanded.add(groupName)
-    }
-    setExpandedGroups(newExpanded)
-  }
-
   const getStatusConfig = (status) => {
     switch (status) {
       case "completed":
         return {
           label: "Completed",
-          bgColor: "bg-emerald-500/10",
-          textColor: "text-emerald-400",
-          borderColor: "border-emerald-500/30",
+          bgColor: "bg-emerald-100",
+          textColor: "text-emerald-700",
+          borderColor: "border-emerald-200",
         }
       case "active":
         return {
           label: "In Progress",
-          bgColor: "bg-amber-500/10",
-          textColor: "text-amber-400",
-          borderColor: "border-amber-500/30",
+          bgColor: "bg-amber-100",
+          textColor: "text-amber-700",
+          borderColor: "border-amber-200",
         }
       case "draft":
         return {
           label: "Draft",
-          bgColor: "bg-slate-500/10",
-          textColor: "text-slate-400",
-          borderColor: "border-slate-500/30",
+          bgColor: "bg-slate-100",
+          textColor: "text-slate-600",
+          borderColor: "border-slate-200",
         }
       default:
         return {
           label: "Unknown",
-          bgColor: "bg-slate-500/10",
-          textColor: "text-slate-400",
-          borderColor: "border-slate-500/30",
+          bgColor: "bg-slate-100",
+          textColor: "text-slate-600",
+          borderColor: "border-slate-200",
         }
     }
   }
@@ -230,27 +219,27 @@ export default function AssessmentsPage() {
     switch (difficulty) {
       case "easy":
         return {
-          bgColor: "bg-emerald-500/10",
-          textColor: "text-emerald-400",
-          borderColor: "border-emerald-500/30",
+          bgColor: "bg-emerald-50",
+          textColor: "text-emerald-600",
+          borderColor: "border-emerald-200",
         }
       case "medium":
         return {
-          bgColor: "bg-blue-500/10",
-          textColor: "text-blue-400",
-          borderColor: "border-blue-500/30",
+          bgColor: "bg-blue-50",
+          textColor: "text-blue-600",
+          borderColor: "border-blue-200",
         }
       case "hard":
         return {
-          bgColor: "bg-indigo-500/10",
-          textColor: "text-indigo-400",
-          borderColor: "border-indigo-500/30",
+          bgColor: "bg-indigo-50",
+          textColor: "text-indigo-600",
+          borderColor: "border-indigo-200",
         }
       default:
         return {
-          bgColor: "bg-slate-500/10",
-          textColor: "text-slate-400",
-          borderColor: "border-slate-500/30",
+          bgColor: "bg-slate-50",
+          textColor: "text-slate-600",
+          borderColor: "border-slate-200",
         }
     }
   }
@@ -273,144 +262,116 @@ export default function AssessmentsPage() {
     return `${mins}m ${secs}s`
   }
 
-  const groupAssessmentsByDate = (assessments) => {
-    const groups = {
-      recent: [],
-      thisMonth: [],
-      older: [],
-    }
-
-    const now = new Date()
-    const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
-    const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000)
-
-    assessments.forEach((assessment) => {
-      const assessmentDate = new Date(assessment.createdAt)
-      if (assessmentDate > sevenDaysAgo) {
-        groups.recent.push(assessment)
-      } else if (assessmentDate > thirtyDaysAgo) {
-        groups.thisMonth.push(assessment)
-      } else {
-        groups.older.push(assessment)
-      }
-    })
-
-    return groups
-  }
-
-  const groupedAssessments = groupAssessmentsByDate(filteredAssessments)
-
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-slate-950 flex items-center justify-center">
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
         <div className="text-center">
           <div className="w-16 h-16 mx-auto mb-4 relative">
-            <div className="absolute inset-0 border-4 border-blue-600/30 rounded-full"></div>
+            <div className="absolute inset-0 border-4 border-blue-200 rounded-full"></div>
             <div className="absolute inset-0 border-4 border-blue-600 rounded-full border-t-transparent animate-spin"></div>
           </div>
-          <p className="text-slate-300 text-lg">Loading assessments...</p>
+          <p className="text-slate-600 text-lg font-medium">Loading assessments...</p>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-slate-950 relative overflow-hidden">
-      {/* Gradient Orbs */}
+    <div className="min-h-screen bg-slate-50 relative overflow-hidden font-sans">
+      
+      {/* Light Theme Gradient Orbs */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none" style={{ zIndex: 0 }}>
-        <div className="absolute -top-40 -right-40 w-96 h-96 bg-gradient-to-br from-blue-600/20 to-cyan-600/20 rounded-full blur-3xl" />
-        <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-gradient-to-br from-sky-600/20 to-blue-700/20 rounded-full blur-3xl" />
+        <div className="absolute -top-40 -right-40 w-96 h-96 bg-gradient-to-br from-blue-300/30 to-cyan-300/30 rounded-full blur-3xl" />
+        <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-gradient-to-br from-sky-300/30 to-blue-400/30 rounded-full blur-3xl" />
       </div>
+      
+      <Navigation />
 
-      {/* Header */}
-      <header className="relative z-10 border-b border-slate-800/50 bg-slate-900/80 backdrop-blur-xl">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <div className="flex items-center gap-3 mb-2">
-                <div className="p-2.5 bg-gradient-to-br from-blue-600 to-sky-500 rounded-xl shadow-lg">
-                  <FileText className="h-6 w-6 text-white" />
-                </div>
-                <h1 className="text-3xl font-bold text-white">Assessments</h1>
+      <main className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-32 pb-12">
+        
+        {/* Page Title Area */}
+        <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-8 gap-4">
+          <div>
+            <div className="flex items-center gap-3 mb-2">
+              <div className="p-2.5 bg-white rounded-xl shadow-sm border border-slate-200">
+                <FileText className="h-6 w-6 text-blue-600" />
               </div>
-              <p className="text-slate-400 ml-14">
-                Track your progress and review past performance
-              </p>
+              <h1 className="text-3xl font-bold text-slate-900">Assessments</h1>
             </div>
-            <Button
-              onClick={() => navigate("/")}
-              className="bg-gradient-to-r from-blue-600 to-sky-600 hover:from-blue-500 hover:to-sky-500 text-white shadow-lg shadow-blue-500/30"
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              New Assessment
-            </Button>
+            <p className="text-slate-600 font-medium">
+              Track your progress and review past performance
+            </p>
           </div>
+          <Button
+            onClick={() => navigate("/")}
+            className="bg-blue-600 hover:bg-blue-700 text-white shadow-md shadow-blue-500/20 transition-all"
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            New Assessment
+          </Button>
         </div>
-      </header>
 
-      {/* Main Content */}
-      <main className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Stats Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <Card className="bg-slate-900/50 backdrop-blur-xl border-slate-800/50 hover:border-slate-700/50 transition-all duration-300 group overflow-hidden relative">
-            <div className="absolute inset-0 bg-gradient-to-br from-blue-600/5 to-sky-600/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+          <Card className="bg-white border-slate-200 hover:border-blue-300 hover:shadow-md transition-all duration-300 group overflow-hidden relative shadow-sm">
+            <div className="absolute inset-0 bg-gradient-to-br from-blue-50/50 to-sky-50/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
             <CardContent className="p-6 relative z-10">
               <div className="flex items-center justify-between mb-2">
-                <div className="p-2.5 bg-gradient-to-br from-blue-600 to-sky-600 rounded-lg">
-                  <FileText className="h-5 w-5 text-white" />
+                <div className="p-2 bg-blue-50 rounded-lg">
+                  <FileText className="h-5 w-5 text-blue-600" />
                 </div>
                 <TrendingUp className="h-5 w-5 text-slate-400" />
               </div>
-              <div className="text-3xl font-bold text-white mb-1">{stats.total}</div>
-              <div className="text-sm text-slate-400">Total Assessments</div>
+              <div className="text-3xl font-bold text-slate-900 mb-1">{stats.total}</div>
+              <div className="text-sm text-slate-500 font-medium">Total Assessments</div>
             </CardContent>
           </Card>
 
-          <Card className="bg-slate-900/50 backdrop-blur-xl border-slate-800/50 hover:border-slate-700/50 transition-all duration-300 group overflow-hidden relative">
-            <div className="absolute inset-0 bg-gradient-to-br from-emerald-600/5 to-teal-600/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+          <Card className="bg-white border-slate-200 hover:border-emerald-300 hover:shadow-md transition-all duration-300 group overflow-hidden relative shadow-sm">
+            <div className="absolute inset-0 bg-gradient-to-br from-emerald-50/50 to-teal-50/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
             <CardContent className="p-6 relative z-10">
               <div className="flex items-center justify-between mb-2">
-                <div className="p-2.5 bg-gradient-to-br from-emerald-600 to-teal-600 rounded-lg">
-                  <CheckCircle2 className="h-5 w-5 text-white" />
+                <div className="p-2 bg-emerald-50 rounded-lg">
+                  <CheckCircle2 className="h-5 w-5 text-emerald-600" />
                 </div>
                 <TrendingUp className="h-5 w-5 text-slate-400" />
               </div>
-              <div className="text-3xl font-bold text-white mb-1">{stats.completed}</div>
-              <div className="text-sm text-slate-400">Completed</div>
+              <div className="text-3xl font-bold text-slate-900 mb-1">{stats.completed}</div>
+              <div className="text-sm text-slate-500 font-medium">Completed</div>
             </CardContent>
           </Card>
 
-          <Card className="bg-slate-900/50 backdrop-blur-xl border-slate-800/50 hover:border-slate-700/50 transition-all duration-300 group overflow-hidden relative">
-            <div className="absolute inset-0 bg-gradient-to-br from-amber-600/5 to-orange-600/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+          <Card className="bg-white border-slate-200 hover:border-amber-300 hover:shadow-md transition-all duration-300 group overflow-hidden relative shadow-sm">
+            <div className="absolute inset-0 bg-gradient-to-br from-amber-50/50 to-orange-50/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
             <CardContent className="p-6 relative z-10">
               <div className="flex items-center justify-between mb-2">
-                <div className="p-2.5 bg-gradient-to-br from-amber-600 to-orange-600 rounded-lg">
-                  <Clock className="h-5 w-5 text-white" />
+                <div className="p-2 bg-amber-50 rounded-lg">
+                  <Clock className="h-5 w-5 text-amber-600" />
                 </div>
                 <TrendingUp className="h-5 w-5 text-slate-400" />
               </div>
-              <div className="text-3xl font-bold text-white mb-1">{stats.active}</div>
-              <div className="text-sm text-slate-400">In Progress</div>
+              <div className="text-3xl font-bold text-slate-900 mb-1">{stats.active}</div>
+              <div className="text-sm text-slate-500 font-medium">In Progress</div>
             </CardContent>
           </Card>
 
-          <Card className="bg-slate-900/50 backdrop-blur-xl border-slate-800/50 hover:border-slate-700/50 transition-all duration-300 group overflow-hidden relative">
-            <div className="absolute inset-0 bg-gradient-to-br from-indigo-600/5 to-blue-700/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+          <Card className="bg-white border-slate-200 hover:border-indigo-300 hover:shadow-md transition-all duration-300 group overflow-hidden relative shadow-sm">
+            <div className="absolute inset-0 bg-gradient-to-br from-indigo-50/50 to-blue-50/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
             <CardContent className="p-6 relative z-10">
               <div className="flex items-center justify-between mb-2">
-                <div className="p-2.5 bg-gradient-to-br from-indigo-600 to-blue-700 rounded-lg">
-                  <Award className="h-5 w-5 text-white" />
+                <div className="p-2 bg-indigo-50 rounded-lg">
+                  <Award className="h-5 w-5 text-indigo-600" />
                 </div>
                 <TrendingUp className="h-5 w-5 text-slate-400" />
               </div>
-              <div className="text-3xl font-bold text-white mb-1">{stats.averageScore}%</div>
-              <div className="text-sm text-slate-400">Average Score</div>
+              <div className="text-3xl font-bold text-slate-900 mb-1">{stats.averageScore}%</div>
+              <div className="text-sm text-slate-500 font-medium">Average Score</div>
             </CardContent>
           </Card>
         </div>
 
         {/* Filters */}
-        <div className="bg-slate-900/50 backdrop-blur-xl border border-slate-800/50 rounded-2xl p-6 mb-8">
+        <div className="bg-white border border-slate-200 rounded-2xl p-6 mb-8 shadow-sm">
           <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center justify-between">
             <div className="flex flex-wrap gap-2">
               {[
@@ -423,12 +384,18 @@ export default function AssessmentsPage() {
                 return (
                   <Button
                     key={filter.id}
-                    onClick={() => setActiveFilter(filter.id)}
+                    onClick={() => {
+                      setActiveFilter(filter.id)
+                      // Smart Scroll triggers when tab is clicked
+                      setTimeout(() => {
+                        listContainerRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+                      }, 100)
+                    }}
                     variant={activeFilter === filter.id ? "default" : "outline"}
                     className={`${
                       activeFilter === filter.id
-                        ? "bg-gradient-to-r from-blue-600 to-sky-600 text-white shadow-lg shadow-blue-500/30 border-0"
-                        : "bg-slate-800/50 text-slate-300 border-slate-700/50 hover:bg-slate-700/50 hover:text-white"
+                        ? "bg-blue-600 text-white shadow-md shadow-blue-500/20 border-0"
+                        : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50 hover:text-slate-900"
                     } transition-all duration-300`}
                   >
                     <Icon className="h-4 w-4 mr-2" />
@@ -445,28 +412,28 @@ export default function AssessmentsPage() {
                 placeholder="Search by company or difficulty..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-11 pr-4 py-3 bg-slate-800/50 border border-slate-700/50 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all"
+                className="w-full pl-11 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all shadow-inner text-sm"
               />
             </div>
           </div>
         </div>
 
-        {/* Assessments List */}
+        {/* Assessments List Container */}
         {filteredAssessments.length === 0 ? (
-          <Card className="bg-slate-900/50 backdrop-blur-xl border-slate-800/50">
+          <Card className="bg-white border-slate-200 shadow-sm">
             <CardContent className="p-12 text-center">
-              <div className="w-20 h-20 mx-auto mb-6 bg-slate-800/50 rounded-full flex items-center justify-center">
-                <FileText className="h-10 w-10 text-slate-500" />
+              <div className="w-20 h-20 mx-auto mb-6 bg-slate-100 rounded-full flex items-center justify-center border border-slate-200">
+                <FileText className="h-10 w-10 text-slate-400" />
               </div>
-              <h3 className="text-xl font-semibold text-white mb-2">No assessments found</h3>
-              <p className="text-slate-400 mb-6">
+              <h3 className="text-xl font-bold text-slate-900 mb-2">No assessments found</h3>
+              <p className="text-slate-500 font-medium mb-6">
                 {searchQuery
                   ? "Try adjusting your search criteria"
                   : "Start your first assessment to track your progress"}
               </p>
               <Button
                 onClick={() => navigate("/")}
-                className="bg-gradient-to-r from-blue-600 to-sky-600 hover:from-blue-500 hover:to-sky-500 text-white shadow-lg shadow-blue-500/30"
+                className="bg-blue-600 hover:bg-blue-700 text-white shadow-md shadow-blue-500/20"
               >
                 <Plus className="h-4 w-4 mr-2" />
                 Create Assessment
@@ -474,117 +441,24 @@ export default function AssessmentsPage() {
             </CardContent>
           </Card>
         ) : (
-          <div className="space-y-6">
-            {/* Recent Assessments */}
-            {groupedAssessments.recent.length > 0 && (
-              <div>
-                <button
-                  onClick={() => toggleGroup("recent")}
-                  className="flex items-center gap-2 mb-4 text-white hover:text-sky-400 transition-colors group"
-                >
-                  {expandedGroups.has("recent") ? (
-                    <ChevronDown className="h-5 w-5" />
-                  ) : (
-                    <ChevronRight className="h-5 w-5" />
-                  )}
-                  <h2 className="text-xl font-bold">Recent (Last 7 Days)</h2>
-                  <Badge className="bg-blue-500/20 text-blue-300 border-blue-500/30">
-                    {groupedAssessments.recent.length}
-                  </Badge>
-                </button>
-
-                {expandedGroups.has("recent") && (
-                  <div className="grid grid-cols-1 gap-4">
-                    {groupedAssessments.recent.map((assessment, index) => (
-                      <AssessmentCard
-                        key={assessment._id}
-                        assessment={assessment}
-                        index={index}
-                        getStatusConfig={getStatusConfig}
-                        getDifficultyConfig={getDifficultyConfig}
-                        formatDate={formatDate}
-                        formatTime={formatTime}
-                        navigate={navigate}
-                      />
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* This Month */}
-            {groupedAssessments.thisMonth.length > 0 && (
-              <div>
-                <button
-                  onClick={() => toggleGroup("thisMonth")}
-                  className="flex items-center gap-2 mb-4 text-white hover:text-sky-400 transition-colors group"
-                >
-                  {expandedGroups.has("thisMonth") ? (
-                    <ChevronDown className="h-5 w-5" />
-                  ) : (
-                    <ChevronRight className="h-5 w-5" />
-                  )}
-                  <h2 className="text-xl font-bold">This Month</h2>
-                  <Badge className="bg-blue-500/20 text-blue-300 border-blue-500/30">
-                    {groupedAssessments.thisMonth.length}
-                  </Badge>
-                </button>
-
-                {expandedGroups.has("thisMonth") && (
-                  <div className="grid grid-cols-1 gap-4">
-                    {groupedAssessments.thisMonth.map((assessment, index) => (
-                      <AssessmentCard
-                        key={assessment._id}
-                        assessment={assessment}
-                        index={index}
-                        getStatusConfig={getStatusConfig}
-                        getDifficultyConfig={getDifficultyConfig}
-                        formatDate={formatDate}
-                        formatTime={formatTime}
-                        navigate={navigate}
-                      />
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* Older */}
-            {groupedAssessments.older.length > 0 && (
-              <div>
-                <button
-                  onClick={() => toggleGroup("older")}
-                  className="flex items-center gap-2 mb-4 text-white hover:text-sky-400 transition-colors group"
-                >
-                  {expandedGroups.has("older") ? (
-                    <ChevronDown className="h-5 w-5" />
-                  ) : (
-                    <ChevronRight className="h-5 w-5" />
-                  )}
-                  <h2 className="text-xl font-bold">Older</h2>
-                  <Badge className="bg-blue-500/20 text-blue-300 border-blue-500/30">
-                    {groupedAssessments.older.length}
-                  </Badge>
-                </button>
-
-                {expandedGroups.has("older") && (
-                  <div className="grid grid-cols-1 gap-4">
-                    {groupedAssessments.older.map((assessment, index) => (
-                      <AssessmentCard
-                        key={assessment._id}
-                        assessment={assessment}
-                        index={index}
-                        getStatusConfig={getStatusConfig}
-                        getDifficultyConfig={getDifficultyConfig}
-                        formatDate={formatDate}
-                        formatTime={formatTime}
-                        navigate={navigate}
-                      />
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
+          <div 
+            ref={listContainerRef} 
+            className="bg-slate-50/50 rounded-2xl p-2 sm:p-4 border border-slate-200 shadow-inner max-h-[600px] overflow-y-auto [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-slate-300 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-slate-400 transition-colors scroll-mt-24"
+          >
+            <div className="space-y-4 pr-2">
+              {filteredAssessments.map((assessment, index) => (
+                <AssessmentCard
+                  key={assessment._id}
+                  assessment={assessment}
+                  index={index}
+                  getStatusConfig={getStatusConfig}
+                  getDifficultyConfig={getDifficultyConfig}
+                  formatDate={formatDate}
+                  formatTime={formatTime}
+                  navigate={navigate}
+                />
+              ))}
+            </div>
           </div>
         )}
       </main>
@@ -606,9 +480,9 @@ function AssessmentCard({
 
   return (
     <Card
-      className="bg-slate-900/50 backdrop-blur-xl border-slate-800/50 hover:border-slate-700/50 transition-all duration-500 overflow-hidden group cursor-pointer"
+      className="bg-white border-slate-200 hover:border-blue-300 shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden group cursor-pointer"
       style={{
-        animation: `slideUp 0.5s ease-out ${index * 0.05}s backwards`,
+        animation: `slideUp 0.3s ease-out ${index * 0.05}s backwards`,
       }}
       onClick={() => {
         if (assessment.status === "completed") {
@@ -618,24 +492,24 @@ function AssessmentCard({
         }
       }}
     >
-      <div className="absolute inset-0 bg-gradient-to-r from-blue-600/5 to-sky-600/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+      <div className="absolute inset-0 bg-gradient-to-r from-blue-50/50 to-sky-50/50 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
 
       <CardContent className="p-6 relative z-10">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
           {/* Left Section */}
           <div className="flex-1">
             <div className="flex items-start gap-4 mb-4">
-              <div className="p-3 bg-gradient-to-br from-blue-600 to-sky-600 rounded-xl shadow-lg flex-shrink-0">
-                <Building2 className="h-6 w-6 text-white" />
+              <div className="p-3 bg-slate-50 border border-slate-100 rounded-xl group-hover:bg-white group-hover:border-blue-100 transition-colors">
+                <Building2 className="h-6 w-6 text-blue-600" />
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex flex-wrap items-center gap-2 mb-2">
-                  <h3 className="text-xl font-bold text-white">{assessment.company}</h3>
+                  <h3 className="text-xl font-bold text-slate-900">{assessment.company}</h3>
                   <Badge className={`${statusConfig.bgColor} ${statusConfig.textColor} ${statusConfig.borderColor}`}>
                     {statusConfig.label}
                   </Badge>
                 </div>
-                <div className="flex flex-wrap items-center gap-4 text-sm text-slate-400">
+                <div className="flex flex-wrap items-center gap-4 text-sm text-slate-500 font-medium">
                   <div className="flex items-center gap-1.5">
                     <Calendar className="h-4 w-4" />
                     {formatDate(assessment.createdAt)}
@@ -656,22 +530,22 @@ function AssessmentCard({
             {/* Progress Bar for Completed */}
             {assessment.status === "completed" && (
               <div className="mb-3">
-                <div className="flex items-center justify-between mb-2 text-sm">
-                  <span className="text-slate-400">
+                <div className="flex items-center justify-between mb-2 text-sm font-medium">
+                  <span className="text-slate-600">
                     Progress: {assessment.correctAnswers}/{assessment.totalQuestions}
                   </span>
-                  <span className={`font-semibold ${assessment.score >= 80 ? "text-emerald-400" : assessment.score >= 60 ? "text-blue-400" : "text-amber-400"}`}>
+                  <span className={`font-bold ${assessment.score >= 80 ? "text-emerald-600" : assessment.score >= 60 ? "text-blue-600" : "text-amber-600"}`}>
                     {assessment.score}%
                   </span>
                 </div>
-                <div className="w-full bg-slate-800/50 rounded-full h-2 overflow-hidden border border-slate-700/50">
+                <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden border border-slate-200">
                   <div
                     className={`h-full rounded-full transition-all duration-500 ${
                       assessment.score >= 80
-                        ? "bg-gradient-to-r from-emerald-500 to-teal-500"
+                        ? "bg-gradient-to-r from-emerald-400 to-teal-500"
                         : assessment.score >= 60
-                        ? "bg-gradient-to-r from-blue-500 to-sky-500"
-                        : "bg-gradient-to-r from-amber-500 to-orange-500"
+                        ? "bg-gradient-to-r from-blue-400 to-sky-500"
+                        : "bg-gradient-to-r from-amber-400 to-orange-500"
                     }`}
                     style={{ width: `${(assessment.correctAnswers / assessment.totalQuestions) * 100}%` }}
                   />
@@ -682,17 +556,17 @@ function AssessmentCard({
             {/* Active Progress */}
             {assessment.status === "active" && (
               <div className="mb-3">
-                <div className="flex items-center justify-between mb-2 text-sm">
-                  <span className="text-slate-400">
+                <div className="flex items-center justify-between mb-2 text-sm font-medium">
+                  <span className="text-slate-600">
                     In Progress: {assessment.correctAnswers}/{assessment.totalQuestions}
                   </span>
-                  <span className="text-amber-400 font-semibold">
+                  <span className="text-amber-600 font-bold">
                     {Math.round((assessment.correctAnswers / assessment.totalQuestions) * 100)}% complete
                   </span>
                 </div>
-                <div className="w-full bg-slate-800/50 rounded-full h-2 overflow-hidden border border-slate-700/50">
+                <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden border border-slate-200">
                   <div
-                    className="h-full rounded-full bg-gradient-to-r from-amber-500 to-orange-500 transition-all duration-500"
+                    className="h-full rounded-full bg-gradient-to-r from-amber-400 to-orange-500 transition-all duration-500"
                     style={{ width: `${(assessment.correctAnswers / assessment.totalQuestions) * 100}%` }}
                   />
                 </div>
@@ -701,9 +575,9 @@ function AssessmentCard({
 
             {/* Badge Message */}
             {assessment.badge && assessment.status === "completed" && (
-              <div className="flex items-center gap-2">
-                <Trophy className="h-4 w-4 text-amber-400" />
-                <span className="text-sm text-slate-300">{assessment.badge.message}</span>
+              <div className="flex items-center gap-2 mt-2">
+                <Trophy className="h-4 w-4 text-amber-500" />
+                <span className="text-sm font-semibold text-slate-700">{assessment.badge.message}</span>
               </div>
             )}
           </div>
@@ -713,7 +587,7 @@ function AssessmentCard({
             {assessment.status === "completed" && (
               <Button
                 variant="outline"
-                className="bg-slate-800/50 text-white border-slate-700/50 hover:bg-slate-700/50 hover:border-slate-600/50"
+                className="bg-white text-slate-700 border-slate-200 hover:bg-slate-50 hover:text-blue-600 hover:border-blue-200 transition-colors"
                 onClick={(e) => {
                   e.stopPropagation()
                   navigate(`/results/${assessment.sessionId}`)
@@ -725,7 +599,7 @@ function AssessmentCard({
             )}
             {assessment.status === "active" && (
               <Button
-                className="bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-500 hover:to-orange-500 text-white shadow-lg shadow-amber-500/30"
+                className="bg-amber-500 hover:bg-amber-600 text-white shadow-md shadow-amber-500/20"
                 onClick={(e) => {
                   e.stopPropagation()
                   navigate(`/quiz?resume=${assessment.sessionId}`)
@@ -737,7 +611,7 @@ function AssessmentCard({
             )}
             {assessment.status === "draft" && (
               <Button
-                className="bg-gradient-to-r from-blue-600 to-sky-600 hover:from-blue-500 hover:to-sky-500 text-white shadow-lg shadow-blue-500/30"
+                className="bg-blue-600 hover:bg-blue-700 text-white shadow-md shadow-blue-500/20"
                 onClick={(e) => {
                   e.stopPropagation()
                   navigate(`/quiz?draft=${assessment.sessionId}`)
@@ -750,8 +624,6 @@ function AssessmentCard({
           </div>
         </div>
       </CardContent>
-
-      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 pointer-events-none" />
 
       <style>{`
         @keyframes slideUp {

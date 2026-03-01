@@ -5,6 +5,7 @@ import { Button } from "../components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/card"
 import { Badge } from "../components/ui/badge"
 import { AdaptiveDifficultySelector } from "../components/adaptive-difficulty-selector"
+import { Navigation } from "../components/navigation" // Added Navigation Import
 import {
   Brain,
   Building2,
@@ -42,7 +43,7 @@ import {
 
 export default function HomePage() {
   const navigate = useNavigate()
-  const { user, logout } = useAuth()
+  const { user } = useAuth() // Removed logout, it's handled in Navigation now!
   const [selectedDifficulty, setSelectedDifficulty] = useState(user?.preferences?.preferredDifficulty || "medium")
   const [selectedCompany, setSelectedCompany] = useState(null)
   const [customCompany, setCustomCompany] = useState("")
@@ -50,12 +51,12 @@ export default function HomePage() {
   const [searchQuery, setSearchQuery] = useState("")
   const [isLoading, setIsLoading] = useState(true)
   const [loadingProgress, setLoadingProgress] = useState(0)
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 })
   const [selectedQOTDOption, setSelectedQOTDOption] = useState(null)
   const canvasRef = useRef(null)
-
-  const companies = [
+  const difficultySectionRef = useRef(null)
+  const customInputRef = useRef(null);
+  const [companiesList, setCompaniesList] = useState([
     { id: "google", name: "Google", color: "from-blue-600 to-sky-500",  category: "FAANG" },
     { id: "microsoft", name: "Microsoft", color: "from-blue-700 to-cyan-600", category: "FAANG" },
     { id: "amazon", name: "Amazon", color: "from-slate-700 to-slate-500",  category: "FAANG" },
@@ -69,12 +70,32 @@ export default function HomePage() {
     { id: "deloitte", name: "Deloitte", color: "from-emerald-700 to-teal-700",   category: "Consulting" },
     { id: "cognizant", name: "Cognizant", color: "from-blue-700 to-indigo-600",   category: "Service" },
   ]
-
-  const filteredCompanies = companies.filter((company) =>
+)
+  const filteredCompanies = companiesList.filter((company) =>
     company.name.toLowerCase().includes(searchQuery.toLowerCase())
   )
 
-  // Entry loading animation
+  const handleSaveCustomCompany = (e) => {
+    if (e) e.preventDefault();
+    if (!customCompany.trim()) return;
+    const newId = customCompany.toLowerCase().replace(/\s+/g, '-');
+    
+    // Create new pill if it doesn't exist yet
+    if (!companiesList.find(c => c.id === newId)) {
+      setCompaniesList([...companiesList, { id: newId, name: customCompany, color: "from-blue-600 to-sky-500", category: "Custom" }]);
+    }
+    
+    // Select it, close the input, and clear the text
+    setSelectedCompany(newId);
+    setShowCustomInput(false);
+    setCustomCompany(""); 
+    
+    // Scroll down to difficulty smoothly
+    setTimeout(() => {
+      difficultySectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 100);
+  };
+
   useEffect(() => {
     const timer = setInterval(() => {
       setLoadingProgress((prev) => {
@@ -86,11 +107,9 @@ export default function HomePage() {
         return prev + 2
       })
     }, 30)
-
     return () => clearInterval(timer)
   }, [])
 
-  // Mouse tracking for parallax effect
   useEffect(() => {
     const handleMouseMove = (e) => {
       setMousePosition({
@@ -98,18 +117,14 @@ export default function HomePage() {
         y: (e.clientY / window.innerHeight - 0.5) * 20,
       })
     }
-
     window.addEventListener("mousemove", handleMouseMove)
     return () => window.removeEventListener("mousemove", handleMouseMove)
   }, [])
 
-  // Animated background particles
   useEffect(() => {
     if (isLoading) return
-
     const canvas = canvasRef.current
     if (!canvas) return
-
     const ctx = canvas.getContext("2d")
     canvas.width = window.innerWidth
     canvas.height = window.innerHeight
@@ -130,27 +145,21 @@ export default function HomePage() {
 
     function animate() {
       ctx.clearRect(0, 0, canvas.width, canvas.height)
-
       particles.forEach((particle) => {
         particle.x += particle.vx
         particle.y += particle.vy
-
         if (particle.x < 0 || particle.x > canvas.width) particle.vx *= -1
         if (particle.y < 0 || particle.y > canvas.height) particle.vy *= -1
-
         ctx.beginPath()
         ctx.arc(particle.x, particle.y, particle.radius, 0, Math.PI * 2)
-        ctx.fillStyle = `rgba(59, 130, 246, ${particle.opacity})`
+        ctx.fillStyle = `rgba(59, 130, 246, ${particle.opacity})` 
         ctx.fill()
       })
-
-      // Connect nearby particles
       particles.forEach((p1, i) => {
         particles.slice(i + 1).forEach((p2) => {
           const dx = p1.x - p2.x
           const dy = p1.y - p2.y
           const distance = Math.sqrt(dx * dx + dy * dy)
-
           if (distance < 100) {
             ctx.beginPath()
             ctx.strokeStyle = `rgba(59, 130, 246, ${0.1 * (1 - distance / 100)})`
@@ -161,17 +170,14 @@ export default function HomePage() {
           }
         })
       })
-
       requestAnimationFrame(animate)
     }
 
     animate()
-
     const handleResize = () => {
       canvas.width = window.innerWidth
       canvas.height = window.innerHeight
     }
-
     window.addEventListener("resize", handleResize)
     return () => window.removeEventListener("resize", handleResize)
   }, [isLoading])
@@ -183,21 +189,16 @@ export default function HomePage() {
     navigate("/quiz")
   }
 
-
-
-  // Loading Screen
   if (isLoading) {
     return (
-      <div className="fixed inset-0 bg-gradient-to-br from-slate-950 via-slate-900 to-blue-950 flex items-center justify-center overflow-hidden">
-        {/* Animated SVG Background */}
-        <svg className="absolute inset-0 w-full h-full opacity-20" xmlns="http://www.w3.org/2000/svg">
+      <div className="fixed inset-0 bg-slate-50 flex items-center justify-center overflow-hidden">
+        <svg className="absolute inset-0 w-full h-full opacity-10" xmlns="http://www.w3.org/2000/svg">
           <defs>
             <linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="100%">
               <stop offset="0%" style={{ stopColor: "#0ea5e9", stopOpacity: 1 }} />
               <stop offset="100%" style={{ stopColor: "#3b82f6", stopOpacity: 1 }} />
             </linearGradient>
           </defs>
-          
           {[...Array(5)].map((_, i) => (
             <circle
               key={i}
@@ -212,28 +213,12 @@ export default function HomePage() {
               }}
             />
           ))}
-
-          <path
-            d="M0,50 Q250,100 500,50 T1000,50"
-            stroke="url(#grad1)"
-            strokeWidth="2"
-            fill="none"
-            opacity="0.2"
-            style={{
-              animation: "draw 3s ease-in-out infinite",
-            }}
-          />
+          <path d="M0,50 Q250,100 500,50 T1000,50" stroke="url(#grad1)" strokeWidth="2" fill="none" opacity="0.2" style={{ animation: "draw 3s ease-in-out infinite" }} />
         </svg>
 
         <style>{`
-          @keyframes pulse {
-            0%, 100% { transform: scale(1); opacity: 0.15; }
-            50% { transform: scale(1.3); opacity: 0.3; }
-          }
-          @keyframes draw {
-            0% { stroke-dasharray: 0, 1000; }
-            100% { stroke-dasharray: 1000, 0; }
-          }
+          @keyframes pulse { 0%, 100% { transform: scale(1); opacity: 0.15; } 50% { transform: scale(1.3); opacity: 0.3; } }
+          @keyframes draw { 0% { stroke-dasharray: 0, 1000; } 100% { stroke-dasharray: 1000, 0; } }
         `}</style>
 
         <div className="relative z-10 text-center">
@@ -246,59 +231,27 @@ export default function HomePage() {
                     <stop offset="100%" style={{ stopColor: "#3b82f6" }} />
                   </linearGradient>
                 </defs>
-                <circle
-                  cx="50"
-                  cy="50"
-                  r="45"
-                  fill="none"
-                  stroke="url(#brainGrad)"
-                  strokeWidth="3"
-                  strokeDasharray="283"
-                  strokeDashoffset="283"
-                  style={{
-                    animation: "fillCircle 2s ease-out forwards",
-                  }}
-                />
+                <circle cx="50" cy="50" r="45" fill="none" stroke="url(#brainGrad)" strokeWidth="3" strokeDasharray="283" strokeDashoffset="283" style={{ animation: "fillCircle 2s ease-out forwards" }} />
                 <g transform="translate(50, 50)">
-                  <Brain className="w-12 h-12 text-white" style={{ transform: "translate(-24px, -24px)" }} />
+                  <Brain className="w-12 h-12 text-slate-900" style={{ transform: "translate(-24px, -24px)" }} />
                 </g>
               </svg>
             </div>
           </div>
-
-          <style>{`
-            @keyframes fillCircle {
-              to { stroke-dashoffset: 0; }
-            }
-          `}</style>
-
-          <h1 className="text-5xl font-bold text-white mb-4 animate-fade-in">
-            Aptitude<span className="text-sky-400">AI</span>
-          </h1>
-
-          <p className="text-slate-300 text-lg mb-8 animate-fade-in" style={{ animationDelay: "0.3s" }}>
-            Preparing your personalized learning experience...
-          </p>
-
+          <style>{`@keyframes fillCircle { to { stroke-dashoffset: 0; } }`}</style>
+          <h1 className="text-5xl font-bold text-slate-900 mb-4 animate-fade-in">Aptitude<span className="text-sky-500">AI</span></h1>
+          <p className="text-slate-600 text-lg mb-8 animate-fade-in" style={{ animationDelay: "0.3s" }}>Preparing your personalized learning experience...</p>
           <div className="w-80 mx-auto">
-            <div className="bg-slate-800/50 rounded-full h-2 overflow-hidden backdrop-blur-sm border border-slate-700">
-              <div
-                className="h-full bg-gradient-to-r from-sky-500 to-blue-600 transition-all duration-300 ease-out relative"
-                style={{ width: `${loadingProgress}%` }}
-              >
-                <div className="absolute inset-0 bg-white/20 animate-shimmer"></div>
+            <div className="bg-slate-200 rounded-full h-2 overflow-hidden border border-slate-300">
+              <div className="h-full bg-gradient-to-r from-sky-400 to-blue-500 transition-all duration-300 ease-out relative" style={{ width: `${loadingProgress}%` }}>
+                <div className="absolute inset-0 bg-white/30 animate-shimmer"></div>
               </div>
             </div>
-            <p className="text-slate-400 text-sm mt-3 font-medium">{loadingProgress}%</p>
+            <p className="text-slate-500 text-sm mt-3 font-medium">{loadingProgress}%</p>
           </div>
-
           <div className="flex justify-center gap-2 mt-8">
             {[0, 1, 2].map((i) => (
-              <div
-                key={i}
-                className="w-2.5 h-2.5 bg-sky-400 rounded-full animate-bounce"
-                style={{ animationDelay: `${i * 0.2}s` }}
-              ></div>
+              <div key={i} className="w-2.5 h-2.5 bg-sky-500 rounded-full animate-bounce" style={{ animationDelay: `${i * 0.2}s` }}></div>
             ))}
           </div>
         </div>
@@ -307,184 +260,31 @@ export default function HomePage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-950 relative overflow-hidden">
-      {/* Animated Canvas Background */}
-      <canvas
-        ref={canvasRef}
-        className="fixed inset-0 pointer-events-none opacity-30"
-        style={{ zIndex: 0 }}
-      />
+    <div className="min-h-screen bg-slate-50 relative overflow-hidden font-sans">
+      <canvas ref={canvasRef} className="fixed inset-0 pointer-events-none opacity-40" style={{ zIndex: 0 }} />
 
-      {/* Gradient Orbs - Professional Blues */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none" style={{ zIndex: 0 }}>
-        <div
-          className="absolute -top-40 -right-40 w-96 h-96 bg-gradient-to-br from-blue-600/20 to-cyan-600/20 rounded-full blur-3xl"
-          style={{
-            transform: `translate(${mousePosition.x}px, ${mousePosition.y}px)`,
-            transition: "transform 0.5s ease-out",
-          }}
-        />
-        <div
-          className="absolute -bottom-40 -left-40 w-96 h-96 bg-gradient-to-br from-sky-600/20 to-blue-700/20 rounded-full blur-3xl"
-          style={{
-            transform: `translate(${-mousePosition.x}px, ${-mousePosition.y}px)`,
-            transition: "transform 0.5s ease-out",
-          }}
-        />
-        <div
-          className="absolute top-1/2 left-1/2 w-96 h-96 bg-gradient-to-br from-indigo-600/15 to-blue-600/15 rounded-full blur-3xl"
-          style={{
-            transform: `translate(-50%, -50%) translate(${mousePosition.x * 0.5}px, ${mousePosition.y * 0.5}px)`,
-            transition: "transform 0.5s ease-out",
-          }}
-        />
+        <div className="absolute -top-40 -right-40 w-96 h-96 bg-gradient-to-br from-blue-300/30 to-cyan-300/30 rounded-full blur-3xl" style={{ transform: `translate(${mousePosition.x}px, ${mousePosition.y}px)`, transition: "transform 0.5s ease-out" }} />
+        <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-gradient-to-br from-sky-300/30 to-blue-400/30 rounded-full blur-3xl" style={{ transform: `translate(${-mousePosition.x}px, ${-mousePosition.y}px)`, transition: "transform 0.5s ease-out" }} />
+        <div className="absolute top-1/2 left-1/2 w-96 h-96 bg-gradient-to-br from-indigo-300/20 to-blue-300/20 rounded-full blur-3xl" style={{ transform: `translate(-50%, -50%) translate(${mousePosition.x * 0.5}px, ${mousePosition.y * 0.5}px)`, transition: "transform 0.5s ease-out" }} />
       </div>
 
-      {/* Header */}
-      <header className="fixed top-0 left-0 right-0 z-50 border-b border-slate-800/50 bg-slate-900/80 backdrop-blur-xl">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex items-center justify-between">
-            <div
-              className="flex items-center space-x-3 cursor-pointer group"
-              onClick={() => navigate("/")}
-            >
-              <div className="relative">
-                <div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-sky-500 rounded-xl blur-lg opacity-40 group-hover:opacity-70 transition-opacity"></div>
-                <div className="relative p-2 bg-gradient-to-br from-blue-600 to-sky-500 rounded-xl shadow-xl">
-                  <Brain className="h-6 w-6 text-white" />
-                </div>
-              </div>
-              <div>
-                <span className="text-xl font-bold text-white">
-                  Aptitude<span className="text-sky-400">AI</span>
-                </span>
-                <p className="text-xs text-slate-400 -mt-1">Professional Career Assessment</p>
-              </div>
-            </div>
+      {/* PLUGGED IN NAVIGATION COMPONENT */}
+      <Navigation />
 
-            <nav className="hidden md:flex items-center space-x-1 bg-slate-800/50 rounded-full px-2 py-2 border border-slate-700/50">
-              {[
-                { path: "/", label: "Home", icon: Sparkles },
-                { path: "/assessments", label: "Assessments", icon: BookOpen },
-                { path: "/progress", label: "Progress", icon: TrendingUp },
-                { path: "/employability", label: "Employability", icon: Briefcase },
-              ].map((link) => {
-                const Icon = link.icon
-                return (
-                  <button
-                    key={link.path}
-                    onClick={() => navigate(link.path)}
-                    className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 ${
-                      link.path === "/"
-                        ? "bg-gradient-to-r from-blue-600 to-sky-600 text-white shadow-lg shadow-blue-500/30"
-                        : "text-slate-300 hover:text-white hover:bg-slate-700/50"
-                    }`}
-                  >
-                    <Icon className="h-4 w-4" />
-                    <span className="hidden lg:inline">{link.label}</span>
-                  </button>
-                )
-              })}
-            </nav>
-
-            <div className="flex items-center space-x-3">
-              {user && (
-                <>
-                  <div className="hidden sm:block text-right">
-                    <p className="text-sm font-medium text-white">
-                      {user.profile?.firstName || user.username}
-                    </p>
-                    <div className="flex items-center justify-end gap-1 text-xs text-slate-400">
-                      <Trophy className="h-3 w-3 text-amber-500" />
-                      {user.statistics?.totalAssessments || 0} assessments
-                    </div>
-                  </div>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => navigate("/profile")}
-                    className="bg-slate-800/50 hover:bg-slate-700/50 border border-slate-700/50 text-white"
-                  >
-                    <User className="h-5 w-5" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={logout}
-                    className="bg-slate-800/50 hover:bg-red-500/10 border border-slate-700/50 text-white hover:text-red-400 hover:border-red-500/30"
-                  >
-                    <LogOut className="h-5 w-5" />
-                  </Button>
-                </>
-              )}
-
-              <Button
-                variant="ghost"
-                size="icon"
-                className="md:hidden bg-slate-800/50 border border-slate-700/50 text-white"
-                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              >
-                {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-              </Button>
-            </div>
-          </div>
-
-          {mobileMenuOpen && (
-            <div className="md:hidden mt-4 pb-4 space-y-2 animate-slide-down">
-              {[
-                { path: "/", label: "Home" },
-                { path: "/assessments", label: "Assessments" },
-                { path: "/progress", label: "Progress" },
-                { path: "/employability", label: "Employability" },
-              ].map((link) => (
-                <button
-                  key={link.path}
-                  onClick={() => {
-                    navigate(link.path)
-                    setMobileMenuOpen(false)
-                  }}
-                  className="block w-full text-left px-4 py-3 text-sm font-medium text-slate-300 hover:text-white hover:bg-slate-800/50 rounded-lg transition-all"
-                >
-                  {link.label}
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
-      </header>
-
-      {/* Main Content */}
       <main className="relative pt-32 pb-20 px-4 sm:px-6 lg:px-8" style={{ zIndex: 1 }}>
         <div className="max-w-7xl mx-auto">
-
-           {/* Hero Section */}
           <div className="text-center mb-12">
             <div className="relative mb-8 mt-8">
-              <h1 className="text-xl sm:text-6xl lg:text-7xl font-bold text-white mb-6 animate-fade-in leading-tight">
+              <h1 className="text-4xl sm:text-6xl lg:text-6xl font-bold text-slate-900 mb-6 animate-fade-in leading-tight">
                 Professional Career
                 <br />
                 <span className="relative inline-block">
-                  <span className="relative z-10 text-transparent bg-clip-text bg-gradient-to-r from-sky-400 via-blue-400 to-indigo-400">
+                  <span className="relative z-10 text-transparent bg-clip-text bg-gradient-to-r from-blue-600 via-sky-500 to-indigo-600">
                     Assessment Platform
                   </span>
-                  <svg
-                    className="absolute -bottom-2 left-0 w-full"
-                    height="12"
-                    viewBox="0 0 300 12"
-                    fill="none"
-                    xmlns="http://www.w3.org/2000/svg"
-                  >
-                    <path
-                      d="M2 10C50 5 100 2 150 2C200 2 250 5 298 10"
-                      stroke="url(#underlineGrad)"
-                      strokeWidth="3"
-                      strokeLinecap="round"
-                      style={{
-                        strokeDasharray: 300,
-                        strokeDashoffset: 300,
-                        animation: "drawLine 1.5s ease-out 0.5s forwards",
-                      }}
-                    />
+                  <svg className="absolute -bottom-2 left-0 w-full opacity-60" height="12" viewBox="0 0 300 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M2 10C50 5 100 2 150 2C200 2 250 5 298 10" stroke="url(#underlineGrad)" strokeWidth="4" strokeLinecap="round" style={{ strokeDasharray: 300, strokeDashoffset: 300, animation: "drawLine 1.5s ease-out 0.5s forwards" }} />
                     <defs>
                       <linearGradient id="underlineGrad" x1="0%" y1="0%" x2="100%" y2="0%">
                         <stop offset="0%" stopColor="#0ea5e9" />
@@ -495,100 +295,90 @@ export default function HomePage() {
                   </svg>
                 </span>
               </h1>
-              <style>{`
-                @keyframes drawLine {
-                  to { stroke-dashoffset: 0; }
-                }
-              `}</style>
+              <style>{`@keyframes drawLine { to { stroke-dashoffset: 0; } }`}</style>
             </div>
-
-            <span className="text-lg text-slate-300 mb-12 max-w-3xl mx-auto leading-relaxed animate-fade-in ">
+            <p className="text-lg text-slate-600 mb-12 max-w-3xl mx-auto leading-relaxed animate-fade-in font-medium">
               Land your dream offer with AI-powered assessments modeled after Deloitte, Accenture, and Google.
               <br />Get real-time feedback and comprehensive analytics tailored for corporate success.
-            </span>
+            </p>
           </div>
 
-          {/* Company Selection - Horizontal bar (Full Width Restored) */}
           <div className="mb-12">
-            <div className="bg-slate-900/50 backdrop-blur-xl border border-slate-800/50 rounded-2xl p-6 shadow-2xl">
-              
-              {/* Top Row: Title & Search */}
+            <div className="bg-white/80 backdrop-blur-xl border border-slate-200 rounded-2xl p-6 shadow-xl shadow-slate-200/50">
               <div className="flex flex-col md:flex-row items-center justify-between gap-4 mb-6">
-                <h3 className="text-xl font-bold text-white flex items-center gap-3">
-                  <Building2 className="h-6 w-6 text-sky-400" />
-                  Target Organization
+                <h3 className="text-xl font-bold text-slate-900 flex items-center gap-3">
+                  <Building2 className="h-6 w-6 text-blue-500" /> Target Organization
                 </h3>
-
                 <div className="relative w-full md:w-80">
                   <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
-                  <input
-                    type="text"
-                    placeholder="Search organizations..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full pl-11 pr-4 py-2.5 bg-slate-800/80 border border-slate-700/50 rounded-full text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all text-sm shadow-inner"
-                  />
+                  <input type="text" placeholder="Search organizations..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="w-full pl-11 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-full text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all text-sm shadow-inner" />
                 </div>
               </div>
-
-              {/* Bottom Row: Horizontal Scrollable Pills */}
               <div className="flex items-center gap-3 overflow-x-auto pb-2 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
                 {filteredCompanies.map((company) => (
-                  <button
-                    key={company.id}
-                    onClick={() => {
-                      setSelectedCompany(company.id)
-                      setCustomCompany("")
-                      setShowCustomInput(false)
-                    }}
-                    className={`flex-shrink-0 px-6 py-2.5 rounded-full text-sm font-semibold transition-all duration-300 flex items-center gap-2 border ${
-                      selectedCompany === company.id
-                        ? "bg-gradient-to-r from-blue-600 to-sky-500 text-white border-transparent shadow-lg shadow-blue-500/30"
-                        : "bg-slate-800/50 text-slate-300 border-slate-700/50 hover:bg-slate-700 hover:text-white"
-                    }`}
-                  >
-                    {company.name}
-                    {selectedCompany === company.id && <CheckCircle2 className="h-4 w-4" />}
+                  <button 
+                   type="button"
+                    key={company.id} 
+                    onClick={() => { 
+                      setSelectedCompany(company.id); 
+                      setCustomCompany(""); 
+                      setShowCustomInput(false);
+                      // NEW: Scroll down to difficulty section smoothly
+                      setTimeout(() => {
+                        difficultySectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                      }, 100);}} className={`flex-shrink-0 px-6 py-2.5 rounded-full text-sm font-semibold transition-all duration-300 flex items-center gap-2 border ${selectedCompany === company.id ? "bg-gradient-to-r from-blue-600 to-sky-500 text-white border-transparent shadow-md shadow-blue-500/30" : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50 hover:text-slate-900"}`}>
+                    {company.name} {selectedCompany === company.id && <CheckCircle2 className="h-4 w-4" />}
                   </button>
                 ))}
-
-                {/* "Other" Custom Button */}
-                <button
-                  onClick={() => {
-                    setShowCustomInput(!showCustomInput)
-                    setSelectedCompany(null)
-                  }}
-                  className={`flex-shrink-0 px-6 py-2.5 rounded-full text-sm font-semibold transition-all duration-300 flex items-center gap-2 border border-dashed ${
-                    showCustomInput
-                      ? "border-blue-500 bg-blue-500/10 text-white"
-                      : "border-slate-600 text-slate-400 hover:border-slate-500 hover:text-white"
-                  }`}
-                >
-                  <Plus className="h-4 w-4" />
-                  Other
+                <button 
+                  type="button"
+                  onClick={() => { 
+                    const willShow = !showCustomInput;
+                    setShowCustomInput(willShow); 
+                    setSelectedCompany(null); 
+                    // Scroll to input box when opened
+                    if (willShow) {
+                      setTimeout(() => customInputRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 100);
+                    }
+                  }} className={`flex-shrink-0 px-6 py-2.5 rounded-full text-sm font-semibold transition-all duration-300 flex items-center gap-2 border border-dashed ${showCustomInput ? "border-blue-500 bg-blue-50 text-blue-700" : "border-slate-300 text-slate-500 hover:border-slate-400 hover:text-slate-700"}`}>
+                  <Plus className="h-4 w-4" /> Other
                 </button>
               </div>
-
               {/* Custom Input Field Reveal */}
               {showCustomInput && (
-                <div className="mt-6 animate-slide-down">
-                  <div className="bg-slate-800/50 backdrop-blur-sm rounded-xl p-6 border border-slate-700/50">
-                    <label className="flex items-center gap-2 text-sm font-medium text-slate-300 mb-3">
-                      <Briefcase className="h-4 w-4 text-sky-400" />
-                      Specify Your Target Organization
+                <div ref={customInputRef} className="mt-6 animate-slide-down">
+                  <div className="bg-slate-50 rounded-xl p-6 border border-slate-200">
+                    <label className="flex items-center gap-2 text-sm font-medium text-slate-700 mb-3">
+                      <Briefcase className="h-4 w-4 text-blue-500" /> Specify Your Target Organization
                     </label>
-                    <input
-                      type="text"
-                      value={customCompany}
-                      onChange={(e) => setCustomCompany(e.target.value)}
-                      placeholder="Enter company name (e.g., Tesla, SpaceX, Goldman Sachs)..."
-                      className="w-full px-4 py-3 bg-slate-900/50 border border-slate-700/50 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all"
-                    />
+                    
+                    {/* NEW: Flex container to put input and button side-by-side */}
+                    <div className="flex gap-3">
+                      <input 
+                        type="text" 
+                        value={customCompany} 
+                        onChange={(e) => setCustomCompany(e.target.value)} 
+                        onKeyDown={(e) => e.key === 'Enter' && handleSaveCustomCompany(e)}
+                        placeholder="Enter company name (e.g., Tesla, GoldmanSachs)." 
+                        className="w-full px-4 py-3 bg-white border border-slate-300 rounded-lg text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all shadow-sm" 
+                      />
+                      
+                      {/* THIS IS STEP 3: The Confirm button with type="button" */}
+                      <Button 
+                        type="button" 
+                        onClick={handleSaveCustomCompany}
+                        className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 h-auto rounded-lg shadow-md"
+                      >
+                        Confirm
+                      </Button>
+                    </div>
+
+                    {/* RESTORED: The customization message */}
                     {customCompany && (
-                      <div className="mt-3 flex items-start gap-2 text-sm animate-fade-in">
+                      <div className="mt-4 flex items-start gap-2 text-sm animate-fade-in">
                         <CheckCircle2 className="h-5 w-5 text-emerald-500 flex-shrink-0 mt-0.5" />
-                        <p className="text-emerald-400">
-                          Assessment will be customized based on {customCompany}'s recruitment patterns
+                        <p className="text-emerald-700 font-medium">
+                          Assessment will be customized based on <span className="font-bold">{customCompany}'s</span> recruitment patterns
                         </p>
                       </div>
                     )}
@@ -597,159 +387,77 @@ export default function HomePage() {
               )}
             </div>
           </div>
-              {/* Difficulty Section (Styled like "Assessment Categories") */}
-          <div className="mb-20 max-w-7xl mx-auto">
-            {/* Header Area matching the inspiration image */}
+
+          <div ref={difficultySectionRef} className="mb-20 max-w-7xl mx-auto">
             <div className="flex flex-col md:flex-row items-end justify-between mb-10">
               <div>
-                <div className="flex items-center gap-3 mb-6 mt-5">
-          
-            <Layers className="h-5 w-5 text-sky-400" />
-          
-          
-          <h3 className="text-2xl font-bold text-white">Select Difficulty Level</h3>
-        </div> 
-                <p className="text-slate-400 max-w-2xl">
-                  Expertly crafted test modules covering foundational to advanced scenarios required by top employers.
-                </p>
+                <div className="flex items-center gap-3 mb-4 mt-5">
+                  <Layers className="h-7 w-7 text-blue-500" />
+                  <h3 className="text-2xl font-bold text-slate-900">Select Difficulty Level</h3>
+                </div> 
+                <p className="text-slate-600 max-w-2xl font-medium">Expertly crafted test modules covering foundational to advanced scenarios required by top employers.</p>
               </div>
-              
-              {/* "View Analytics" moved here to match "View All Modules ->" */}
-              <button 
-                onClick={() => navigate("/progress")}
-                className="mt-6 md:mt-0 flex items-center gap-2 text-sm font-semibold text-blue-400 hover:text-blue-300 transition-colors"
-              >
+              <button onClick={() => navigate("/progress")} className="mt-6 md:mt-0 flex items-center gap-2 text-sm font-semibold text-blue-600 hover:text-blue-500 transition-colors">
                 View Analytics <ArrowRight className="h-4 w-4" />
               </button>
             </div>
-
-            {/* Difficulty Cards */}
-            <AdaptiveDifficultySelector
-              selectedDifficulty={selectedDifficulty}
-              onDifficultySelect={setSelectedDifficulty}
-              onStartTest={handleStartTest} 
-            />
+            <AdaptiveDifficultySelector selectedDifficulty={selectedDifficulty} onDifficultySelect={setSelectedDifficulty} onStartTest={handleStartTest} />
           </div>
 
-          {/* Features */}
-          
-
-          
-          {/* Gemini-Powered Intelligence Card */}
           <div className="mb-24 max-w-5xl mx-auto animate-fade-in" style={{ animationDelay: "0.2s" }}>
-            <div className="bg-slate-900/40 backdrop-blur-xl border border-slate-800/60 rounded-3xl overflow-hidden shadow-2xl flex flex-col lg:flex-row-reverse">
-              
-              {/* Left Content Area (Reversed to sit on the Right) */}
+            <div className="bg-white/80 backdrop-blur-xl border border-slate-200 rounded-3xl overflow-hidden shadow-xl shadow-slate-200/50 flex flex-col lg:flex-row-reverse">
               <div className="p-8 lg:p-10 lg:w-1/2 flex flex-col justify-center relative">
-                <div className="absolute top-0 right-0 w-full h-full bg-gradient-to-bl from-purple-500/5 to-transparent pointer-events-none" />
-                
-                <Badge className="w-fit mb-4 bg-purple-500/20 text-purple-300 border-purple-500/30 px-3 py-1 font-semibold tracking-wide text-[10px]">
-                  Simple & Powerful
-                </Badge>
-                
-                <h2 className="text-2xl lg:text-3xl font-bold text-white mb-4">
-                  Gemini-Powered Intelligence
-                </h2>
-                
-                <p className="text-base text-slate-400 mb-8 leading-relaxed">
-                  Rather than relying on a mix of secondary algorithms, we chose a direct, streamlined integration with Google Gemini. This ensures your assessments are evaluated with pure, world-class reasoning.
-                </p>
-                
-                {/* 2 Key Points */}
+                <div className="absolute top-0 right-0 w-full h-full bg-gradient-to-bl from-purple-100/50 to-transparent pointer-events-none" />
+                <Badge className="w-fit mb-4 bg-purple-100 text-purple-700 border-purple-200 px-3 py-1 font-semibold tracking-wide text-[10px]">Simple & Powerful</Badge>
+                <h2 className="text-2xl lg:text-3xl font-bold text-slate-900 mb-4">Gemini-Powered Intelligence</h2>
+                <p className="text-base text-slate-600 mb-8 leading-relaxed">To ensure the highest standard of evaluation, our platform is built directly on Google Gemini. By leveraging its native intelligence, we guarantee world-class reasoning quality and precise feedback for every assessment.</p>
                 <div className="space-y-6 mb-8">
                   <div className="flex gap-3">
-                    <div className="mt-1 w-6 h-6 rounded-full bg-purple-500/20 flex items-center justify-center shrink-0 border border-purple-500/30">
-                      <CheckCircle2 className="w-3.5 h-3.5 text-purple-400" />
+                    <div className="mt-1 w-6 h-6 rounded-full bg-purple-100 flex items-center justify-center shrink-0 border border-purple-200">
+                      <CheckCircle2 className="w-3.5 h-3.5 text-purple-600" />
                     </div>
                     <div>
-                      <h4 className="text-white font-semibold text-base mb-1">Dynamic Gemini Reasoning</h4>
-                      <p className="text-slate-400 text-xs leading-relaxed">Leverage the native logic and semantic understanding of Google Gemini to analyze your complex answers without middle-ware interference.</p>
+                      <h4 className="text-slate-900 font-semibold text-base mb-1">Dynamic Gemini Reasoning</h4>
+                      <p className="text-slate-600 text-xs leading-relaxed">Leverage the native logic and semantic understanding of Google Gemini to analyze your complex answers without middle-ware interference.</p>
                     </div>
                   </div>
                   <div className="flex gap-3">
-                    <div className="mt-1 w-6 h-6 rounded-full bg-purple-500/20 flex items-center justify-center shrink-0 border border-purple-500/30">
-                      <CheckCircle2 className="w-3.5 h-3.5 text-purple-400" />
+                    <div className="mt-1 w-6 h-6 rounded-full bg-purple-100 flex items-center justify-center shrink-0 border border-purple-200">
+                      <CheckCircle2 className="w-3.5 h-3.5 text-purple-600" />
                     </div>
                     <div>
-                      <h4 className="text-white font-semibold text-base mb-1">Personalized Gemini Roadmap</h4>
-                      <p className="text-slate-400 text-xs leading-relaxed">Receive a learning plan synthesized directly from Gemini's analysis of your cognitive gaps in real-time.</p>
+                      <h4 className="text-slate-900 font-semibold text-base mb-1">Personalized Gemini Roadmap</h4>
+                      <p className="text-slate-600 text-xs leading-relaxed">Receive a learning plan synthesized directly from Gemini's analysis of your cognitive gaps in real-time.</p>
                     </div>
                   </div>
                 </div>
-
-                {/* REDUCED BUTTON SIZE: Changed px-8 py-6 to px-6 py-4 */}
-                <Button 
-                  onClick={() => navigate('/progress')} 
-                  className="w-fit bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white px-6 py-4 h-auto rounded-xl text-sm font-semibold shadow-lg shadow-purple-500/20 flex items-center gap-2 transition-all duration-300 group"
-                >
-                  <Sparkles className="w-4 h-4 group-hover:scale-110 transition-transform" />
-                  Get Gemini Report
+                <Button onClick={() => navigate('/progress')} className="w-fit bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white px-6 py-4 h-auto rounded-xl text-sm font-semibold shadow-lg shadow-purple-500/30 flex items-center gap-2 transition-all duration-300 group">
+                  <Sparkles className="w-4 h-4 group-hover:scale-110 transition-transform" /> Get Gemini Report
                 </Button>
               </div>
-              
-              {/* Right Content Area (The Professional Analytics UI Dashboard) */}
-              <div className="p-6 lg:p-8 lg:w-1/2 bg-slate-950/40 border-r border-slate-800/50 flex items-center justify-center relative">
-                <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-purple-900/20 via-slate-950/0 to-slate-950/0 pointer-events-none" />
-                
-                <div className="bg-slate-900 border border-slate-700/50 rounded-2xl w-full max-w-md shadow-2xl overflow-hidden transform transition-transform hover:-translate-y-1 duration-500">
-                  
-                  {/* Dashboard Header */}
+              <div className="p-6 lg:p-8 lg:w-1/2 bg-slate-50/50 border-r border-slate-200 flex items-center justify-center relative">
+                <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-purple-200/40 via-transparent to-transparent pointer-events-none" />
+                <div className="bg-white border border-slate-200 rounded-2xl w-full max-w-md shadow-2xl shadow-slate-200/60 overflow-hidden transform transition-transform hover:-translate-y-1 duration-500">
                   <div className="bg-gradient-to-r from-purple-600 to-indigo-600 p-4 flex items-center justify-between">
-                    <div className="flex items-center gap-2 text-white font-bold text-xs tracking-wide">
-                      <Sparkles className="w-3.5 h-3.5" />
-                      GEMINI PERFORMANCE ANALYSIS
-                    </div>
-                    <Badge className="bg-white/20 text-white border-none hover:bg-white/20 text-[8px] tracking-wider px-1.5">
-                      GEMINI-1.5-PRO
-                    </Badge>
+                    <div className="flex items-center gap-2 text-white font-bold text-xs tracking-wide"><Sparkles className="w-3.5 h-3.5" /> GEMINI PERFORMANCE ANALYSIS</div>
+                    <Badge className="bg-white/20 text-white border-none hover:bg-white/30 text-[8px] tracking-wider px-1.5 backdrop-blur-sm">GEMINI-1.5-PRO</Badge>
                   </div>
-                  
-                  {/* Dashboard Body */}
                   <div className="p-5 lg:p-6 space-y-6">
-                    {/* Progress Bar 1 */}
                     <div>
-                      <div className="flex justify-between text-xs mb-2.5">
-                        <span className="text-white font-medium">Complex Data Interpretation</span>
-                        <span className="text-purple-400 font-bold">92%</span>
-                      </div>
-                      <div className="w-full bg-slate-800 rounded-full h-1.5">
-                        <div className="bg-purple-500 h-1.5 rounded-full relative" style={{ width: '92%' }}>
-                          <div className="absolute right-0 top-1/2 transform -translate-y-1/2 w-1.5 h-1.5 bg-white rounded-full mr-0 shadow-[0_0_5px_rgba(255,255,255,0.8)]" />
-                        </div>
-                      </div>
+                      <div className="flex justify-between text-xs mb-2.5"><span className="text-slate-800 font-bold">Complex Data Interpretation</span><span className="text-purple-600 font-bold">92%</span></div>
+                      <div className="w-full bg-slate-100 rounded-full h-1.5"><div className="bg-purple-500 h-1.5 rounded-full relative shadow-sm" style={{ width: '92%' }}><div className="absolute right-0 top-1/2 transform -translate-y-1/2 w-1.5 h-1.5 bg-white rounded-full mr-0 shadow-sm" /></div></div>
                     </div>
-                    
-                    {/* Progress Bar 2 */}
                     <div>
-                      <div className="flex justify-between text-xs mb-2.5">
-                        <span className="text-white font-medium">Logical Deduction Speed</span>
-                        <span className="text-indigo-400 font-bold">64%</span>
-                      </div>
-                      <div className="w-full bg-slate-800 rounded-full h-1.5">
-                        <div className="bg-indigo-500 h-1.5 rounded-full relative" style={{ width: '64%' }}>
-                          <div className="absolute right-0 top-1/2 transform -translate-y-1/2 w-1.5 h-1.5 bg-white rounded-full mr-0 shadow-[0_0_5px_rgba(255,255,255,0.8)]" />
-                        </div>
-                      </div>
-                      <p className="text-[10px] text-slate-400 mt-2.5 flex items-center gap-1.5">
-                        <Sparkles className="w-3 h-3 text-indigo-400" /> 
-                        Gemini Insight: Work on syllogism patterns.
-                      </p>
+                      <div className="flex justify-between text-xs mb-2.5"><span className="text-slate-800 font-bold">Logical Deduction Speed</span><span className="text-indigo-600 font-bold">64%</span></div>
+                      <div className="w-full bg-slate-100 rounded-full h-1.5"><div className="bg-indigo-500 h-1.5 rounded-full relative shadow-sm" style={{ width: '64%' }}><div className="absolute right-0 top-1/2 transform -translate-y-1/2 w-1.5 h-1.5 bg-white rounded-full mr-0 shadow-sm" /></div></div>
+                      <p className="text-[10px] text-slate-500 mt-2.5 flex items-center gap-1.5 font-medium"><Sparkles className="w-3 h-3 text-indigo-500" /> Gemini Insight: Work on syllogism patterns.</p>
                     </div>
-
-                    {/* Drill Recommendation */}
-                    <div className="pt-6 border-t border-slate-800/80 border-dashed">
-                      <span className="text-[9px] font-bold text-slate-500 tracking-wider uppercase block mb-3">
-                        GEMINI RECOMMENDED DRILL
-                      </span>
-                      <div className="bg-slate-800/40 border border-slate-700/50 hover:border-purple-500/50 p-3 rounded-xl flex items-start gap-3 cursor-pointer transition-colors duration-300 group">
-                        <div className="p-2 bg-purple-500/20 rounded-lg text-purple-400 group-hover:bg-purple-500 group-hover:text-white transition-colors">
-                          <FileText className="w-4 h-4" />
-                        </div>
-                        <div className="flex-1">
-                          <h5 className="text-white text-xs font-semibold mb-0.5 group-hover:text-purple-300 transition-colors">Advanced Matrix Reasoning 2.0</h5>
-                          <p className="text-[10px] text-slate-400">Video Guide • 12 mins</p>
-                        </div>
-                        <ExternalLink className="w-3.5 h-3.5 text-slate-500 group-hover:text-purple-400 transition-colors mt-0.5" />
+                    <div className="pt-6 border-t border-slate-200 border-dashed">
+                      <span className="text-[9px] font-bold text-slate-400 tracking-wider uppercase block mb-3">GEMINI RECOMMENDED DRILL</span>
+                      <div className="bg-slate-50 border border-slate-200 hover:border-purple-300 p-3 rounded-xl flex items-start gap-3 cursor-pointer transition-colors duration-300 group">
+                        <div className="p-2 bg-purple-100 rounded-lg text-purple-600 group-hover:bg-purple-600 group-hover:text-white transition-colors"><FileText className="w-4 h-4" /></div>
+                        <div className="flex-1"><h5 className="text-slate-900 text-xs font-bold mb-0.5 group-hover:text-purple-700 transition-colors">Advanced Matrix Reasoning 2.0</h5><p className="text-[10px] text-slate-500 font-medium">Video Guide • 12 mins</p></div>
+                        <ExternalLink className="w-3.5 h-3.5 text-slate-400 group-hover:text-purple-600 transition-colors mt-0.5" />
                       </div>
                     </div>
                   </div>
@@ -758,85 +466,30 @@ export default function HomePage() {
             </div>
           </div>
 
-          {/* Experience the AI Rigor (Question of the Day Card) */}
           <div className="mb-8 max-w-5xl mx-auto animate-fade-in">
-            <div className="bg-slate-900/40 backdrop-blur-xl border border-slate-800/60 rounded-3xl overflow-hidden shadow-2xl flex flex-col lg:flex-row">
-              
-              {/* Left Content Area */}
-              {/* NUDGED UP: Changed justify-center to justify-start and added pt-12 */}
+            <div className="bg-white/80 backdrop-blur-xl border border-slate-200 rounded-3xl overflow-hidden shadow-xl shadow-slate-200/50 flex flex-col lg:flex-row">
               <div className="p-8 pt-12 lg:p-10 lg:w-1/2 flex flex-col justify-start relative">
-                <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-indigo-500/5 to-transparent pointer-events-none" />
-                
-                <Badge className="w-fit mb-4 bg-indigo-500/20 text-indigo-300 border-indigo-500/30 px-3 py-1 font-semibold tracking-wide text-[10px]">
-                  QUESTION OF THE DAY
-                </Badge>
-                
-                <h2 className="text-2xl lg:text-3xl font-bold text-white mb-4">
-                  Experience the AI Rigor
-                </h2>
-                
-                <p className="text-base text-slate-400 mb-8 leading-relaxed">
-                  Our questions aren't just from a bank. They are procedurally generated to match the specific difficulty curves of elite assessment providers like SHL, Kenexa, and Cubiks.
-                </p>
-                
+                <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-indigo-100/50 to-transparent pointer-events-none" />
+                <Badge className="w-fit mb-4 bg-indigo-100 text-indigo-700 border-indigo-200 px-3 py-1 font-semibold tracking-wide text-[10px]">QUESTION OF THE DAY</Badge>
+                <h2 className="text-2xl lg:text-3xl font-bold text-slate-900 mb-4">Experience the AI Rigor</h2>
+                <p className="text-base text-slate-600 mb-8 leading-relaxed">Our questions aren't just from a bank. They are procedurally generated to match the specific difficulty curves of elite assessment providers like SHL, Kenexa, and Cubiks.</p>
                 <div className="flex flex-wrap items-center gap-3">
-                  {/* REDUCED BUTTON SIZE: Changed px-8 py-6 to px-6 py-4 */}
-                  <Button className="bg-indigo-600 hover:bg-indigo-500 text-white px-6 py-4 h-auto rounded-xl text-sm font-semibold shadow-lg shadow-indigo-500/20 transition-all duration-300">
-                    Try This Question
-                  </Button>
-                  <Button variant="ghost" className="text-slate-300 hover:text-white hover:bg-slate-800/50 px-4 py-4 h-auto rounded-xl text-sm font-semibold transition-all duration-300">
-                    Explain Solution
-                  </Button>
+                  <Button className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-4 h-auto rounded-xl text-sm font-semibold shadow-md shadow-indigo-500/20 transition-all duration-300">Try This Question</Button>
+                  <Button variant="ghost" className="text-slate-600 hover:text-slate-900 hover:bg-slate-100 px-4 py-4 h-auto rounded-xl text-sm font-semibold transition-all duration-300">Explain Solution</Button>
                 </div>
               </div>
-
-              {/* Right Content Area (The Interactive Question UI) */}
-              <div className="p-6 lg:p-8 lg:w-1/2 bg-slate-950/40 border-l border-slate-800/50 flex items-center justify-center relative">
-                <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-indigo-900/20 via-slate-950/0 to-slate-950/0 pointer-events-none" />
-                
-                {/* REDUCED PADDING: Changed p-6 lg:p-8 to p-5 lg:p-6 */}
-                <div className="bg-slate-900 border border-slate-700/50 rounded-2xl p-5 lg:p-6 w-full max-w-md shadow-2xl relative overflow-hidden transform transition-transform hover:scale-[1.02] duration-500">
-                  {/* Card Header */}
-                  <div className="flex justify-between items-center mb-5">
-                    <span className="text-[10px] font-bold tracking-wider text-slate-400 uppercase">
-                      Question #204 - Numerical
-                    </span>
-                    <Badge variant="outline" className="text-slate-300 border-slate-600 bg-slate-800/50 text-[10px] px-2 py-0">
-                      Hard
-                    </Badge>
-                  </div>
-                  
-                  {/* Question Prompt */}
-                  <p className="text-slate-200 text-sm mb-6 leading-relaxed font-medium">
-                    If Company A's revenue grew by 15% in Q1 and declined by 8% in Q2, while its operating costs remained constant at 60% of original Q1 revenue, what is the net profit margin percentage at the end of Q2?
-                  </p>
-                  
-                  {/* Options */}
+              <div className="p-6 lg:p-8 lg:w-1/2 bg-slate-50/50 border-l border-slate-200 flex items-center justify-center relative">
+                <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-indigo-200/40 via-transparent to-transparent pointer-events-none" />
+                <div className="bg-white border border-slate-200 rounded-2xl p-5 lg:p-6 w-full max-w-md shadow-xl shadow-slate-200/80 relative overflow-hidden transform transition-transform hover:scale-[1.02] duration-500">
+                  <div className="flex justify-between items-center mb-5"><span className="text-[10px] font-bold tracking-wider text-slate-500 uppercase">Question #204 - Numerical</span><Badge variant="outline" className="text-slate-600 border-slate-300 bg-slate-50 text-[10px] px-2 py-0">Hard</Badge></div>
+                  <p className="text-slate-900 text-sm mb-6 leading-relaxed font-bold">If Company A's revenue grew by 15% in Q1 and declined by 8% in Q2, while its operating costs remained constant at 60% of original Q1 revenue, what is the net profit margin percentage at the end of Q2?</p>
                   <div className="space-y-2">
                     {['4.25%', '6.70%', '12.4%', '8.10%'].map((opt, i) => {
                       const isSelected = selectedQOTDOption === i;
-                      
                       return (
-                        <div 
-                          key={i} 
-                          onClick={() => setSelectedQOTDOption(i)}
-                          className={`flex items-center justify-between p-2.5 rounded-xl border cursor-pointer transition-all duration-300 group ${
-                            isSelected 
-                              ? "border-indigo-500 bg-indigo-500/10 shadow-[0_0_15px_rgba(99,102,241,0.1)]" 
-                              : "border-slate-700/50 bg-slate-800/30 hover:bg-slate-800/80 hover:border-indigo-500/50"
-                          }`}
-                        >
-                          <span className={`text-sm font-medium transition-colors ${
-                            isSelected ? "text-white" : "text-slate-300 group-hover:text-white"
-                          }`}>
-                            {opt}
-                          </span>
-                          
-                          {/* Radio Button Circle */}
-                          <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center transition-colors ${
-                            isSelected ? "border-indigo-500" : "border-slate-600 group-hover:border-indigo-400"
-                          }`}>
-                            {/* Inner filled dot when selected */}
+                        <div key={i} onClick={() => setSelectedQOTDOption(i)} className={`flex items-center justify-between p-3 rounded-xl border cursor-pointer transition-all duration-300 group ${isSelected ? "border-indigo-500 bg-indigo-50 shadow-sm" : "border-slate-200 bg-white hover:bg-slate-50 hover:border-indigo-300"}`}>
+                          <span className={`text-sm font-bold transition-colors ${isSelected ? "text-indigo-900" : "text-slate-600 group-hover:text-slate-900"}`}>{opt}</span>
+                          <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center transition-colors bg-white ${isSelected ? "border-indigo-500" : "border-slate-300 group-hover:border-indigo-400"}`}>
                             {isSelected && <div className="w-2 h-2 rounded-full bg-indigo-500 animate-scale-in" />}
                           </div>
                         </div>
@@ -847,68 +500,32 @@ export default function HomePage() {
               </div>
             </div>
           </div>
-
-          
-          
         </div>
       </main>
 
-      {/* Footer */}
-      <footer className="relative border-t border-slate-800/50 py-12 px-4 bg-slate-900/50 backdrop-blur-xl">
+      <footer className="relative border-t border-slate-200 py-12 px-4 bg-white/80 backdrop-blur-xl">
         <div className="max-w-7xl mx-auto">
           <div className="flex flex-col md:flex-row items-center justify-between gap-6">
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-gradient-to-br from-blue-600 to-sky-500 rounded-xl shadow-xl">
-                <Brain className="h-6 w-6 text-white" />
-              </div>
-              <div>
-                <span className="text-xl font-bold text-white">
-                  Aptitude<span className="text-sky-400">AI</span>
-                </span>
-                <p className="text-sm text-slate-400">Professional Career Development</p>
-              </div>
+              <div className="p-2 bg-gradient-to-br from-blue-600 to-sky-500 rounded-xl shadow-md"><Brain className="h-6 w-6 text-white" /></div>
+              <div><span className="text-xl font-bold text-slate-900">Aptitude<span className="text-sky-500">AI</span></span><p className="text-sm text-slate-500 font-medium">Professional Career Development</p></div>
             </div>
-
             <div className="text-center md:text-right">
-              <p className="text-slate-400 text-sm mb-1">
-                Powered by Advanced AI Technology
-              </p>
-              <p className="text-slate-500 text-xs">
-                © 2024 AptitudeAI. All rights reserved.
-              </p>
+              <p className="text-slate-600 font-medium text-sm mb-1">Powered by Advanced AI Technology</p>
+              <p className="text-slate-400 text-xs">© 2026 AptitudeAI. All rights reserved.</p>
             </div>
           </div>
         </div>
       </footer>
 
-      {/* Global Styles */}
       <style>{`
-        @keyframes shimmer {
-          0% { background-position: -1000px 0; }
-          100% { background-position: 1000px 0; }
-        }
-        @keyframes fade-in {
-          from { opacity: 0; }
-          to { opacity: 1; }
-        }
-        @keyframes slide-down {
-          from { opacity: 0; transform: translateY(-10px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-        .animate-shimmer {
-          background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
-          background-size: 1000px 100%;
-          animation: shimmer 2s infinite;
-        }
-        .animate-fade-in {
-          animation: fade-in 1s ease-out;
-        }
-        .animate-slide-down {
-          animation: slide-down 0.3s ease-out;
-        }
-        .animate-scale-in {
-          animation: scale-in 0.3s ease-out;
-        }
+        @keyframes shimmer { 0% { background-position: -1000px 0; } 100% { background-position: 1000px 0; } }
+        @keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes slide-down { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+        .animate-shimmer { background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent); background-size: 1000px 100%; animation: shimmer 2s infinite; }
+        .animate-fade-in { animation: fade-in 1s ease-out; }
+        .animate-slide-down { animation: slide-down 0.3s ease-out; }
+        .animate-scale-in { animation: scale-in 0.3s ease-out; }
       `}</style>
     </div>
   )

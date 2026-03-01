@@ -1,9 +1,12 @@
+
+
+
 import React, { useState, useEffect, useRef } from "react"
 import { useNavigate } from "react-router-dom"
 import { Button } from "../components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/card"
 import { Badge } from "../components/ui/badge"
-import { Progress } from "../components/ui/progress"
+import { Navigation } from "../components/navigation" 
 import {
   TrendingUp,
   TrendingDown,
@@ -23,17 +26,12 @@ import {
   Activity,
   CircleDot,
   ChevronRight,
-  Star,
-  Flame,
-  Users,
-  LogOut,
-  User,
 } from "lucide-react"
 import { useAuth } from "../contexts/auth-context"
 
 export default function ProgressPage() {
   const navigate = useNavigate()
-  const { user, logout } = useAuth()
+  const { user } = useAuth() // Removed logout, handled by Navigation
   const [progressData, setProgressData] = useState([])
   const [stats, setStats] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -203,22 +201,22 @@ export default function ProgressPage() {
       ctx.fillStyle = gradient
       ctx.fillRect(x, y, width, barHeight)
 
-      // Score text
-      ctx.fillStyle = "#ffffff"
+      // Score text (Changed to dark for light theme)
+      ctx.fillStyle = "#1e293b" 
       ctx.font = "bold 12px system-ui"
       ctx.textAlign = "center"
       ctx.fillText(`${test.score}%`, x + width / 2, y - 8)
 
       // Day label
-      ctx.fillStyle = "#94a3b8"
+      ctx.fillStyle = "#64748b"
       ctx.font = "10px system-ui"
       const date = new Date(test.date)
       const dayLabel = date.toLocaleDateString("en-US", { weekday: "short" })
       ctx.fillText(dayLabel, x + width / 2, height - padding + 20)
     })
 
-    // Draw axes
-    ctx.strokeStyle = "#334155"
+    // Draw axes (Light theme)
+    ctx.strokeStyle = "#e2e8f0"
     ctx.lineWidth = 2
     ctx.beginPath()
     ctx.moveTo(padding, padding)
@@ -247,10 +245,10 @@ export default function ProgressPage() {
 
     ctx.clearRect(0, 0, width, height)
 
-    // Background arc
+    // Background arc (Light Theme)
     ctx.beginPath()
     ctx.arc(centerX, centerY, radius, Math.PI, 2 * Math.PI, false)
-    ctx.strokeStyle = "#1e293b"
+    ctx.strokeStyle = "#e2e8f0"
     ctx.lineWidth = 20
     ctx.stroke()
 
@@ -276,14 +274,14 @@ export default function ProgressPage() {
     ctx.lineCap = "round"
     ctx.stroke()
 
-    // Center text
-    ctx.fillStyle = "#ffffff"
+    // Center text (Light Theme)
+    ctx.fillStyle = "#0f172a"
     ctx.font = "bold 48px system-ui"
     ctx.textAlign = "center"
     ctx.textBaseline = "middle"
     ctx.fillText(`${stats.averageScore}%`, centerX, centerY - 15)
 
-    ctx.fillStyle = "#94a3b8"
+    ctx.fillStyle = "#64748b"
     ctx.font = "14px system-ui"
     ctx.fillText("Average Score", centerX, centerY + 20)
   }, [stats])
@@ -308,9 +306,9 @@ export default function ProgressPage() {
   const getTrendIcon = (trend) => {
     switch (trend) {
       case "improving":
-        return <TrendingUp className="h-5 w-5 text-emerald-400" />
+        return <TrendingUp className="h-5 w-5 text-emerald-500" />
       case "declining":
-        return <TrendingDown className="h-5 w-5 text-red-400" />
+        return <TrendingDown className="h-5 w-5 text-red-500" />
       default:
         return <Minus className="h-5 w-5 text-slate-400" />
     }
@@ -319,19 +317,19 @@ export default function ProgressPage() {
   const getTrendColor = (trend) => {
     switch (trend) {
       case "improving":
-        return "text-emerald-400"
+        return "text-emerald-600"
       case "declining":
-        return "text-red-400"
+        return "text-red-600"
       default:
-        return "text-slate-400"
+        return "text-slate-500"
     }
   }
 
   const getScoreColor = (score) => {
-    if (score >= 80) return "text-emerald-400"
-    if (score >= 60) return "text-blue-400"
-    if (score >= 40) return "text-amber-400"
-    return "text-red-400"
+    if (score >= 80) return "text-emerald-600"
+    if (score >= 60) return "text-blue-600"
+    if (score >= 40) return "text-amber-500"
+    return "text-red-500"
   }
 
   const getBadgeIcon = (level) => {
@@ -345,13 +343,13 @@ export default function ProgressPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-950 flex items-center justify-center">
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
         <div className="text-center">
           <div className="w-16 h-16 mx-auto mb-4 relative">
-            <div className="absolute inset-0 border-4 border-blue-600/30 rounded-full"></div>
+            <div className="absolute inset-0 border-4 border-blue-200 rounded-full"></div>
             <div className="absolute inset-0 border-4 border-blue-600 rounded-full border-t-transparent animate-spin"></div>
           </div>
-          <p className="text-slate-300 text-lg">Loading analytics...</p>
+          <p className="text-slate-600 text-lg font-medium">Loading analytics...</p>
         </div>
       </div>
     )
@@ -359,67 +357,33 @@ export default function ProgressPage() {
 
   if (progressData.length === 0) {
     return (
-      <div className="min-h-screen bg-slate-950 relative overflow-hidden">
-        {/* Gradient Orbs */}
+      <div className="min-h-screen bg-slate-50 relative overflow-hidden">
+        {/* Light Theme Orbs */}
         <div className="fixed inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute -top-40 -right-40 w-96 h-96 bg-gradient-to-br from-blue-600/20 to-cyan-600/20 rounded-full blur-3xl" />
-          <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-gradient-to-br from-sky-600/20 to-blue-700/20 rounded-full blur-3xl" />
+          <div className="absolute -top-40 -right-40 w-96 h-96 bg-gradient-to-br from-blue-300/30 to-cyan-300/30 rounded-full blur-3xl" />
+          <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-gradient-to-br from-sky-300/30 to-blue-400/30 rounded-full blur-3xl" />
         </div>
 
-        {/* Header */}
-        <header className="relative z-10 border-b border-slate-800/50 bg-slate-900/80 backdrop-blur-xl">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3 cursor-pointer" onClick={() => navigate("/")}>
-                <div className="p-2 bg-gradient-to-br from-blue-600 to-sky-500 rounded-xl shadow-xl">
-                  <Brain className="h-6 w-6 text-white" />
-                </div>
-                <span className="text-xl font-bold text-white">
-                  Aptitude<span className="text-sky-400">AI</span>
-                </span>
-              </div>
-              {user && (
-                <div className="flex items-center gap-3">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => navigate("/profile")}
-                    className="bg-slate-800/50 hover:bg-slate-700/50 border border-slate-700/50 text-white"
-                  >
-                    <User className="h-5 w-5" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={logout}
-                    className="bg-slate-800/50 hover:bg-red-500/10 border border-slate-700/50 text-white hover:text-red-400"
-                  >
-                    <LogOut className="h-5 w-5" />
-                  </Button>
-                </div>
-              )}
-            </div>
-          </div>
-        </header>
+        {/* ✅ Replaced Header with Navigation */}
+        <Navigation />
 
-        <div className="flex items-center justify-center min-h-[calc(100vh-5rem)] px-4 relative z-10">
-          <Card className="max-w-md text-center bg-slate-900/50 backdrop-blur-xl border-slate-800/50 shadow-2xl">
+        <div className="flex items-center justify-center min-h-[calc(100vh-5rem)] px-4 relative z-10 pt-20">
+          <Card className="max-w-md text-center bg-white/80 backdrop-blur-xl border-slate-200 shadow-xl shadow-slate-200/50">
             <CardHeader>
-              <div className="p-6 bg-gradient-to-br from-blue-600/10 to-sky-600/10 rounded-full w-fit mx-auto mb-4 border border-blue-500/20">
-                <BarChart3 className="h-16 w-16 text-blue-400" />
+              <div className="p-6 bg-gradient-to-br from-blue-50 to-sky-50 rounded-full w-fit mx-auto mb-4 border border-blue-100">
+                <BarChart3 className="h-16 w-16 text-blue-600" />
               </div>
-              <CardTitle className="text-3xl text-white">Start Your Journey</CardTitle>
-              <CardDescription className="text-base text-slate-400 mt-2">
+              <CardTitle className="text-3xl text-slate-900">Start Your Journey</CardTitle>
+              <CardDescription className="text-base text-slate-600 mt-2 font-medium">
                 Take your first assessment to unlock detailed progress tracking and analytics
               </CardDescription>
             </CardHeader>
             <CardContent>
               <Button
                 onClick={() => navigate("/")}
-                className="w-full bg-gradient-to-r from-blue-600 to-sky-600 hover:from-blue-500 hover:to-sky-500 text-white shadow-lg shadow-blue-500/30"
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white shadow-md shadow-blue-500/20"
                 size="lg"
               >
-                <Brain className="h-4 w-4 mr-2" />
                 Take Your First Assessment
               </Button>
             </CardContent>
@@ -430,18 +394,19 @@ export default function ProgressPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-950 relative overflow-hidden">
-      {/* Gradient Orbs */}
+    <div className="min-h-screen bg-slate-50 relative overflow-hidden font-sans">
+      
+      {/* Light Theme Orbs */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none" style={{ zIndex: 0 }}>
         <div
-          className="absolute -top-40 -right-40 w-96 h-96 bg-gradient-to-br from-blue-600/20 to-cyan-600/20 rounded-full blur-3xl"
+          className="absolute -top-40 -right-40 w-96 h-96 bg-gradient-to-br from-blue-300/30 to-cyan-300/30 rounded-full blur-3xl"
           style={{
             transform: `translate(${mousePosition.x}px, ${mousePosition.y}px)`,
             transition: "transform 0.5s ease-out",
           }}
         />
         <div
-          className="absolute -bottom-40 -left-40 w-96 h-96 bg-gradient-to-br from-sky-600/20 to-blue-700/20 rounded-full blur-3xl"
+          className="absolute -bottom-40 -left-40 w-96 h-96 bg-gradient-to-br from-sky-300/30 to-blue-400/30 rounded-full blur-3xl"
           style={{
             transform: `translate(${-mousePosition.x}px, ${-mousePosition.y}px)`,
             transition: "transform 0.5s ease-out",
@@ -449,62 +414,23 @@ export default function ProgressPage() {
         />
       </div>
 
-      {/* Header */}
-      <header className="relative z-10 border-b border-slate-800/50 bg-slate-900/80 backdrop-blur-xl">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3 cursor-pointer" onClick={() => navigate("/")}>
-              <div className="p-2 bg-gradient-to-br from-blue-600 to-sky-500 rounded-xl shadow-xl">
-                <Brain className="h-6 w-6 text-white" />
-              </div>
-              <span className="text-xl font-bold text-white">
-                Aptitude<span className="text-sky-400">AI</span>
-              </span>
-            </div>
-            {user && (
-              <div className="flex items-center gap-3">
-                <div className="hidden sm:block text-right">
-                  <p className="text-sm font-medium text-white">{user.profile?.firstName || user.username}</p>
-                  <div className="flex items-center justify-end gap-1 text-xs text-slate-400">
-                    <Trophy className="h-3 w-3 text-amber-500" />
-                    {stats?.totalTests || 0} completed
-                  </div>
-                </div>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => navigate("/profile")}
-                  className="bg-slate-800/50 hover:bg-slate-700/50 border border-slate-700/50 text-white"
-                >
-                  <User className="h-5 w-5" />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={logout}
-                  className="bg-slate-800/50 hover:bg-red-500/10 border border-slate-700/50 text-white hover:text-red-400"
-                >
-                  <LogOut className="h-5 w-5" />
-                </Button>
-              </div>
-            )}
-          </div>
-        </div>
-      </header>
+      {/* ✅ Replaced Header with Navigation */}
+      <Navigation />
 
-      {/* Main Content */}
-      <main className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      {/* Main Content - Added pt-32 so it clears the fixed Navigation bar */}
+      <main className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-32 pb-12">
+        
         {/* Page Header */}
         <div className="text-center mb-12">
-          <div className="inline-flex items-center gap-2 bg-gradient-to-r from-blue-600/10 to-sky-600/10 backdrop-blur-sm border border-blue-500/20 px-6 py-3 rounded-full mb-6">
-            <Activity className="h-4 w-4 text-sky-400" />
-            <span className="text-sm font-medium text-slate-200">Performance Analytics</span>
+          <div className="inline-flex items-center gap-2 bg-blue-50 border border-blue-100 px-6 py-3 rounded-full mb-6 shadow-sm">
+            <Activity className="h-4 w-4 text-blue-600" />
+            <span className="text-sm font-bold text-blue-800">Performance Analytics</span>
           </div>
 
-          <h1 className="text-5xl font-bold text-white mb-4">
-            Your Learning <span className="text-transparent bg-clip-text bg-gradient-to-r from-sky-400 to-blue-400">Dashboard</span>
+          <h1 className="text-5xl font-bold text-slate-900 mb-4">
+            Your Learning <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-sky-500">Dashboard</span>
           </h1>
-          <p className="text-lg text-slate-400 max-w-2xl mx-auto">
+          <p className="text-lg text-slate-600 max-w-2xl mx-auto font-medium">
             Track your improvement, analyze performance, and celebrate achievements
           </p>
         </div>
@@ -512,70 +438,70 @@ export default function ProgressPage() {
         {/* Stats Grid */}
         {stats && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-            <Card className="bg-slate-900/50 backdrop-blur-xl border-slate-800/50 hover:border-slate-700/50 transition-all duration-300 group overflow-hidden relative">
-              <div className="absolute inset-0 bg-gradient-to-br from-blue-600/5 to-sky-600/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+            <Card className="bg-white border-slate-200 hover:border-blue-300 hover:shadow-md transition-all duration-300 group overflow-hidden relative shadow-sm">
+              <div className="absolute inset-0 bg-gradient-to-br from-blue-50/50 to-sky-50/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
               <CardContent className="p-6 relative z-10">
                 <div className="flex items-center justify-between mb-3">
-                  <div className="p-2.5 bg-gradient-to-br from-blue-600 to-sky-600 rounded-lg">
-                    <Target className="h-5 w-5 text-white" />
+                  <div className="p-2.5 bg-blue-50 border border-blue-100 rounded-lg">
+                    <Target className="h-5 w-5 text-blue-600" />
                   </div>
-                  <ChevronRight className="h-5 w-5 text-slate-500 group-hover:text-sky-400 transition-colors" />
+                  <ChevronRight className="h-5 w-5 text-slate-400 group-hover:text-blue-500 transition-colors" />
                 </div>
-                <div className="text-4xl font-bold text-white mb-1">{stats.totalTests}</div>
-                <div className="text-sm text-slate-400">Total Assessments</div>
+                <div className="text-4xl font-bold text-slate-900 mb-1">{stats.totalTests}</div>
+                <div className="text-sm text-slate-500 font-medium">Total Assessments</div>
               </CardContent>
             </Card>
 
-            <Card className="bg-slate-900/50 backdrop-blur-xl border-slate-800/50 hover:border-slate-700/50 transition-all duration-300 group overflow-hidden relative">
-              <div className="absolute inset-0 bg-gradient-to-br from-emerald-600/5 to-teal-600/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+            <Card className="bg-white border-slate-200 hover:border-emerald-300 hover:shadow-md transition-all duration-300 group overflow-hidden relative shadow-sm">
+              <div className="absolute inset-0 bg-gradient-to-br from-emerald-50/50 to-teal-50/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
               <CardContent className="p-6 relative z-10">
                 <div className="flex items-center justify-between mb-3">
-                  <div className="p-2.5 bg-gradient-to-br from-emerald-600 to-teal-600 rounded-lg">
-                    <BarChart3 className="h-5 w-5 text-white" />
+                  <div className="p-2.5 bg-emerald-50 border border-emerald-100 rounded-lg">
+                    <BarChart3 className="h-5 w-5 text-emerald-600" />
                   </div>
-                  <ChevronRight className="h-5 w-5 text-slate-500 group-hover:text-emerald-400 transition-colors" />
+                  <ChevronRight className="h-5 w-5 text-slate-400 group-hover:text-emerald-500 transition-colors" />
                 </div>
                 <div className={`text-4xl font-bold mb-1 ${getScoreColor(stats.averageScore)}`}>
                   {stats.averageScore}%
                 </div>
-                <div className="text-sm text-slate-400">Average Score</div>
+                <div className="text-sm text-slate-500 font-medium">Average Score</div>
               </CardContent>
             </Card>
 
-            <Card className="bg-slate-900/50 backdrop-blur-xl border-slate-800/50 hover:border-slate-700/50 transition-all duration-300 group overflow-hidden relative">
-              <div className="absolute inset-0 bg-gradient-to-br from-amber-600/5 to-orange-600/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+            <Card className="bg-white border-slate-200 hover:border-amber-300 hover:shadow-md transition-all duration-300 group overflow-hidden relative shadow-sm">
+              <div className="absolute inset-0 bg-gradient-to-br from-amber-50/50 to-orange-50/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
               <CardContent className="p-6 relative z-10">
                 <div className="flex items-center justify-between mb-3">
-                  <div className="p-2.5 bg-gradient-to-br from-amber-600 to-orange-600 rounded-lg">
-                    <Trophy className="h-5 w-5 text-white" />
+                  <div className="p-2.5 bg-amber-50 border border-amber-100 rounded-lg">
+                    <Trophy className="h-5 w-5 text-amber-600" />
                   </div>
-                  <ChevronRight className="h-5 w-5 text-slate-500 group-hover:text-amber-400 transition-colors" />
+                  <ChevronRight className="h-5 w-5 text-slate-400 group-hover:text-amber-500 transition-colors" />
                 </div>
                 <div className="flex items-center gap-2 mb-1">
                   <div className={`text-4xl font-bold ${getScoreColor(stats.bestScore)}`}>
                     {stats.bestScore}%
                   </div>
-                  <Badge className="bg-slate-800/50 text-slate-300 border-slate-700/50 capitalize text-xs">
+                  <Badge className="bg-slate-100 text-slate-600 border-slate-200 capitalize text-[10px] px-2 py-0">
                     {stats.bestDifficulty}
                   </Badge>
                 </div>
-                <div className="text-sm text-slate-400">Best Performance</div>
+                <div className="text-sm text-slate-500 font-medium">Best Performance</div>
               </CardContent>
             </Card>
 
-            <Card className="bg-slate-900/50 backdrop-blur-xl border-slate-800/50 hover:border-slate-700/50 transition-all duration-300 group overflow-hidden relative">
-              <div className="absolute inset-0 bg-gradient-to-br from-indigo-600/5 to-blue-700/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+            <Card className="bg-white border-slate-200 hover:border-indigo-300 hover:shadow-md transition-all duration-300 group overflow-hidden relative shadow-sm">
+              <div className="absolute inset-0 bg-gradient-to-br from-indigo-50/50 to-blue-50/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
               <CardContent className="p-6 relative z-10">
                 <div className="flex items-center justify-between mb-3">
-                  <div className="p-2.5 bg-gradient-to-br from-indigo-600 to-blue-700 rounded-lg">
-                    <Sparkles className="h-5 w-5 text-white" />
+                  <div className="p-2.5 bg-indigo-50 border border-indigo-100 rounded-lg">
+                    <Sparkles className="h-5 w-5 text-indigo-600" />
                   </div>
                   {getTrendIcon(stats.trend)}
                 </div>
                 <div className={`text-3xl font-bold capitalize mb-1 ${getTrendColor(stats.trend)}`}>
                   {stats.trend}
                 </div>
-                <div className="text-sm text-slate-400">Learning Trend</div>
+                <div className="text-sm text-slate-500 font-medium">Learning Trend</div>
               </CardContent>
             </Card>
           </div>
@@ -584,49 +510,49 @@ export default function ProgressPage() {
         {/* Charts Row */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
           {/* Performance Chart */}
-          <Card className="bg-slate-900/50 backdrop-blur-xl border-slate-800/50 overflow-hidden relative group">
-            <div className="absolute inset-0 bg-gradient-to-br from-slate-800/30 to-slate-900/30" />
-            <CardHeader className="relative z-10">
+          <Card className="bg-white border-slate-200 overflow-hidden relative shadow-sm">
+            <div className="absolute inset-0 bg-gradient-to-br from-slate-50/50 to-white opacity-50" />
+            <CardHeader className="relative z-10 border-b border-slate-100 pb-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="p-2 bg-gradient-to-br from-blue-600 to-sky-600 rounded-lg">
-                    <BarChart3 className="h-5 w-5 text-white" />
+                  <div className="p-2 bg-blue-50 border border-blue-100 rounded-lg">
+                    <BarChart3 className="h-5 w-5 text-blue-600" />
                   </div>
                   <div>
-                    <CardTitle className="text-lg text-white">Recent Performance</CardTitle>
-                    <CardDescription className="text-slate-400">Last 7 assessments</CardDescription>
+                    <CardTitle className="text-lg text-slate-900">Recent Performance</CardTitle>
+                    <CardDescription className="text-slate-500 font-medium">Last 7 assessments</CardDescription>
                   </div>
                 </div>
-                <Badge className="bg-blue-500/20 text-blue-300 border-blue-500/30">
+                <Badge className="bg-blue-100 text-blue-700 border-blue-200">
                   Trending
                 </Badge>
               </div>
             </CardHeader>
-            <CardContent className="relative z-10">
+            <CardContent className="relative z-10 pt-6">
               <canvas ref={chartCanvasRef} className="w-full h-64" />
             </CardContent>
           </Card>
 
           {/* Gauge Chart */}
-          <Card className="bg-slate-900/50 backdrop-blur-xl border-slate-800/50 overflow-hidden relative group">
-            <div className="absolute inset-0 bg-gradient-to-br from-slate-800/30 to-slate-900/30" />
-            <CardHeader className="relative z-10">
+          <Card className="bg-white border-slate-200 overflow-hidden relative shadow-sm">
+            <div className="absolute inset-0 bg-gradient-to-br from-slate-50/50 to-white opacity-50" />
+            <CardHeader className="relative z-10 border-b border-slate-100 pb-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="p-2 bg-gradient-to-br from-emerald-600 to-teal-600 rounded-lg">
-                    <CircleDot className="h-5 w-5 text-white" />
+                  <div className="p-2 bg-emerald-50 border border-emerald-100 rounded-lg">
+                    <CircleDot className="h-5 w-5 text-emerald-600" />
                   </div>
                   <div>
-                    <CardTitle className="text-lg text-white">Success Rate</CardTitle>
-                    <CardDescription className="text-slate-400">Overall performance</CardDescription>
+                    <CardTitle className="text-lg text-slate-900">Success Rate</CardTitle>
+                    <CardDescription className="text-slate-500 font-medium">Overall performance</CardDescription>
                   </div>
                 </div>
-                <Badge className="bg-emerald-500/20 text-emerald-300 border-emerald-500/30">
+                <Badge className="bg-emerald-100 text-emerald-700 border-emerald-200">
                   Active
                 </Badge>
               </div>
             </CardHeader>
-            <CardContent className="relative z-10">
+            <CardContent className="relative z-10 pt-6">
               <canvas ref={gaugeCanvasRef} className="w-full h-64" />
             </CardContent>
           </Card>
@@ -634,47 +560,50 @@ export default function ProgressPage() {
 
         {/* Badge Collection */}
         {badgeStats && (
-          <Card className="mb-8 bg-gradient-to-br from-slate-900/70 to-slate-800/50 backdrop-blur-xl border-slate-800/50 overflow-hidden relative group">
-            <div className="absolute inset-0 bg-gradient-to-r from-amber-600/5 to-orange-600/5" />
+          <Card className="mb-8 bg-gradient-to-br from-slate-900 to-slate-800 border-slate-800 overflow-hidden relative group shadow-xl">
+            {/* Kept this dark intentionally to make the badges pop like a display case! */}
+            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-amber-900/40 via-transparent to-transparent opacity-60" />
             <CardHeader className="relative z-10">
               <div className="flex items-center gap-3">
-                <div className="p-2.5 bg-gradient-to-br from-amber-600 to-orange-600 rounded-xl shadow-lg">
+                <div className="p-2.5 bg-gradient-to-br from-amber-500 to-orange-500 rounded-xl shadow-md border border-amber-400/50">
                   <Award className="h-6 w-6 text-white" />
                 </div>
                 <div>
                   <CardTitle className="text-2xl text-white">Achievement Collection</CardTitle>
-                  <CardDescription className="text-slate-400 text-base">Badges earned through excellence</CardDescription>
+                  <CardDescription className="text-slate-400 font-medium text-base">Badges earned through excellence</CardDescription>
                 </div>
               </div>
             </CardHeader>
             <CardContent className="relative z-10">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                
                 <div className="relative group/badge">
                   <div className="absolute inset-0 bg-gradient-to-br from-amber-500/20 to-orange-500/20 rounded-2xl blur-xl opacity-0 group-hover/badge:opacity-100 transition-opacity duration-500" />
-                  <div className="relative text-center p-8 bg-slate-800/50 backdrop-blur-sm rounded-2xl border-2 border-amber-500/30 hover:border-amber-500/50 transition-all duration-300 hover:scale-105">
+                  <div className="relative text-center p-8 bg-slate-800/80 rounded-2xl border border-amber-500/30 hover:border-amber-500/60 transition-all duration-300 hover:-translate-y-1 shadow-lg">
                     <div className="text-7xl mb-4 transform group-hover/badge:scale-110 transition-transform duration-300">🥉</div>
                     <div className="text-4xl font-bold text-amber-400 mb-2">{badgeStats.beginner}</div>
-                    <p className="text-sm text-slate-400 font-medium">Beginner Badges</p>
+                    <p className="text-sm text-slate-300 font-medium">Beginner Badges</p>
                   </div>
                 </div>
 
                 <div className="relative group/badge">
-                  <div className="absolute inset-0 bg-gradient-to-br from-blue-500/20 to-sky-500/20 rounded-2xl blur-xl opacity-0 group-hover/badge:opacity-100 transition-opacity duration-500" />
-                  <div className="relative text-center p-8 bg-slate-800/50 backdrop-blur-sm rounded-2xl border-2 border-blue-500/30 hover:border-blue-500/50 transition-all duration-300 hover:scale-105">
+                  <div className="absolute inset-0 bg-gradient-to-br from-slate-400/20 to-slate-300/20 rounded-2xl blur-xl opacity-0 group-hover/badge:opacity-100 transition-opacity duration-500" />
+                  <div className="relative text-center p-8 bg-slate-800/80 rounded-2xl border border-slate-400/30 hover:border-slate-400/60 transition-all duration-300 hover:-translate-y-1 shadow-lg">
                     <div className="text-7xl mb-4 transform group-hover/badge:scale-110 transition-transform duration-300">🥈</div>
-                    <div className="text-4xl font-bold text-blue-400 mb-2">{badgeStats.intermediate}</div>
-                    <p className="text-sm text-slate-400 font-medium">Intermediate Badges</p>
+                    <div className="text-4xl font-bold text-slate-300 mb-2">{badgeStats.intermediate}</div>
+                    <p className="text-sm text-slate-300 font-medium">Intermediate Badges</p>
                   </div>
                 </div>
 
                 <div className="relative group/badge">
-                  <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/20 to-blue-600/20 rounded-2xl blur-xl opacity-0 group-hover/badge:opacity-100 transition-opacity duration-500" />
-                  <div className="relative text-center p-8 bg-slate-800/50 backdrop-blur-sm rounded-2xl border-2 border-indigo-500/30 hover:border-indigo-500/50 transition-all duration-300 hover:scale-105">
+                  <div className="absolute inset-0 bg-gradient-to-br from-yellow-400/20 to-amber-500/20 rounded-2xl blur-xl opacity-0 group-hover/badge:opacity-100 transition-opacity duration-500" />
+                  <div className="relative text-center p-8 bg-slate-800/80 rounded-2xl border border-yellow-400/30 hover:border-yellow-400/60 transition-all duration-300 hover:-translate-y-1 shadow-lg">
                     <div className="text-7xl mb-4 transform group-hover/badge:scale-110 transition-transform duration-300">🥇</div>
-                    <div className="text-4xl font-bold text-indigo-400 mb-2">{badgeStats.advanced}</div>
-                    <p className="text-sm text-slate-400 font-medium">Advanced Badges</p>
+                    <div className="text-4xl font-bold text-yellow-400 mb-2">{badgeStats.advanced}</div>
+                    <p className="text-sm text-slate-300 font-medium">Advanced Badges</p>
                   </div>
                 </div>
+
               </div>
             </CardContent>
           </Card>
@@ -682,30 +611,30 @@ export default function ProgressPage() {
 
         {/* Company & Topic Performance */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+          
           {/* Company Performance */}
           {stats?.companyStats && Object.keys(stats.companyStats).length > 0 && (
-            <Card className="bg-slate-900/50 backdrop-blur-xl border-slate-800/50 overflow-hidden relative group">
-              <div className="absolute inset-0 bg-gradient-to-br from-slate-800/30 to-slate-900/30" />
-              <CardHeader className="relative z-10">
+            <Card className="bg-white border-slate-200 overflow-hidden relative shadow-sm">
+              <CardHeader className="relative z-10 border-b border-slate-100 pb-4">
                 <div className="flex items-center gap-3">
-                  <div className="p-2 bg-gradient-to-br from-blue-600 to-sky-600 rounded-lg">
-                    <Building2 className="h-5 w-5 text-white" />
+                  <div className="p-2 bg-blue-50 border border-blue-100 rounded-lg">
+                    <Building2 className="h-5 w-5 text-blue-600" />
                   </div>
                   <div>
-                    <CardTitle className="text-lg text-white">Company Performance</CardTitle>
-                    <CardDescription className="text-slate-400">Target-specific scores</CardDescription>
+                    <CardTitle className="text-lg text-slate-900">Company Performance</CardTitle>
+                    <CardDescription className="text-slate-500 font-medium">Target-specific scores</CardDescription>
                   </div>
                 </div>
               </CardHeader>
-              <CardContent className="relative z-10">
-                <div className="space-y-4">
+              <CardContent className="relative z-10 pt-6">
+                <div className="space-y-5">
                   {Object.entries(stats.companyStats)
                     .sort(([, a], [, b]) => b.avgScore - a.avgScore)
                     .map(([company, data]) => (
                       <div key={company} className="group/item">
                         <div className="flex items-center justify-between mb-2">
                           <div className="flex items-center gap-3">
-                            <div className="text-2xl">
+                            <div className="text-2xl drop-shadow-sm">
                               {company === "google" ? "🔍" : 
                                company === "microsoft" ? "🪟" : 
                                company === "amazon" ? "📦" : 
@@ -713,28 +642,28 @@ export default function ProgressPage() {
                                company === "meta" ? "👥" : "🏢"}
                             </div>
                             <div>
-                              <span className="font-semibold capitalize text-white">
+                              <span className="font-bold capitalize text-slate-900">
                                 {company === "general" ? "General" : company}
                               </span>
-                              <p className="text-xs text-slate-500">
+                              <p className="text-xs text-slate-500 font-medium">
                                 {data.tests} test{data.tests !== 1 ? "s" : ""}
                               </p>
                             </div>
                           </div>
                           <Badge className={`${
-                            data.avgScore >= 80 ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/30" :
-                            data.avgScore >= 60 ? "bg-blue-500/20 text-blue-300 border-blue-500/30" :
-                            "bg-amber-500/20 text-amber-300 border-amber-500/30"
+                            data.avgScore >= 80 ? "bg-emerald-100 text-emerald-700 border-emerald-200" :
+                            data.avgScore >= 60 ? "bg-blue-100 text-blue-700 border-blue-200" :
+                            "bg-amber-100 text-amber-700 border-amber-200"
                           } font-bold`}>
                             {data.avgScore}%
                           </Badge>
                         </div>
-                        <div className="w-full bg-slate-800/50 rounded-full h-2.5 overflow-hidden border border-slate-700/50">
+                        <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden border border-slate-200">
                           <div
                             className={`h-full rounded-full transition-all duration-500 ${
-                              data.avgScore >= 80 ? "bg-gradient-to-r from-emerald-500 to-teal-500" :
-                              data.avgScore >= 60 ? "bg-gradient-to-r from-blue-500 to-sky-500" :
-                              "bg-gradient-to-r from-amber-500 to-orange-500"
+                              data.avgScore >= 80 ? "bg-gradient-to-r from-emerald-400 to-teal-500" :
+                              data.avgScore >= 60 ? "bg-gradient-to-r from-blue-400 to-sky-500" :
+                              "bg-gradient-to-r from-amber-400 to-orange-500"
                             }`}
                             style={{ width: `${data.avgScore}%` }}
                           />
@@ -748,21 +677,20 @@ export default function ProgressPage() {
 
           {/* Topic Mastery */}
           {stats?.topicStats && Object.keys(stats.topicStats).length > 0 && (
-            <Card className="bg-slate-900/50 backdrop-blur-xl border-slate-800/50 overflow-hidden relative group">
-              <div className="absolute inset-0 bg-gradient-to-br from-slate-800/30 to-slate-900/30" />
-              <CardHeader className="relative z-10">
+            <Card className="bg-white border-slate-200 overflow-hidden relative shadow-sm">
+              <CardHeader className="relative z-10 border-b border-slate-100 pb-4">
                 <div className="flex items-center gap-3">
-                  <div className="p-2 bg-gradient-to-br from-indigo-600 to-blue-700 rounded-lg">
-                    <BookOpen className="h-5 w-5 text-white" />
+                  <div className="p-2 bg-indigo-50 border border-indigo-100 rounded-lg">
+                    <BookOpen className="h-5 w-5 text-indigo-600" />
                   </div>
                   <div>
-                    <CardTitle className="text-lg text-white">Topic Mastery</CardTitle>
-                    <CardDescription className="text-slate-400">Skills breakdown</CardDescription>
+                    <CardTitle className="text-lg text-slate-900">Topic Mastery</CardTitle>
+                    <CardDescription className="text-slate-500 font-medium">Skills breakdown</CardDescription>
                   </div>
                 </div>
               </CardHeader>
-              <CardContent className="relative z-10">
-                <div className="space-y-4">
+              <CardContent className="relative z-10 pt-6">
+                <div className="space-y-5">
                   {Object.entries(stats.topicStats)
                     .sort(([, a], [, b]) => b.accuracy - a.accuracy)
                     .slice(0, 5)
@@ -770,25 +698,25 @@ export default function ProgressPage() {
                       <div key={topic} className="group/item">
                         <div className="flex items-center justify-between mb-2">
                           <div>
-                            <span className="font-semibold capitalize text-white text-sm">{topic}</span>
-                            <p className="text-xs text-slate-500">
+                            <span className="font-bold capitalize text-slate-900 text-sm">{topic}</span>
+                            <p className="text-xs text-slate-500 font-medium">
                               {data.correct}/{data.total} correct
                             </p>
                           </div>
                           <Badge className={`${
-                            data.accuracy >= 80 ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/30" :
-                            data.accuracy >= 60 ? "bg-blue-500/20 text-blue-300 border-blue-500/30" :
-                            "bg-amber-500/20 text-amber-300 border-amber-500/30"
+                            data.accuracy >= 80 ? "bg-emerald-100 text-emerald-700 border-emerald-200" :
+                            data.accuracy >= 60 ? "bg-blue-100 text-blue-700 border-blue-200" :
+                            "bg-amber-100 text-amber-700 border-amber-200"
                           } font-bold`}>
                             {data.accuracy}%
                           </Badge>
                         </div>
-                        <div className="w-full bg-slate-800/50 rounded-full h-2.5 overflow-hidden border border-slate-700/50">
+                        <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden border border-slate-200">
                           <div
                             className={`h-full rounded-full transition-all duration-500 ${
-                              data.accuracy >= 80 ? "bg-gradient-to-r from-emerald-500 to-teal-500" :
-                              data.accuracy >= 60 ? "bg-gradient-to-r from-blue-500 to-sky-500" :
-                              "bg-gradient-to-r from-amber-500 to-orange-500"
+                              data.accuracy >= 80 ? "bg-gradient-to-r from-emerald-400 to-teal-500" :
+                              data.accuracy >= 60 ? "bg-gradient-to-r from-blue-400 to-sky-500" :
+                              "bg-gradient-to-r from-amber-400 to-orange-500"
                             }`}
                             style={{ width: `${data.accuracy}%` }}
                           />
@@ -801,55 +729,58 @@ export default function ProgressPage() {
           )}
         </div>
 
-        {/* Recent History */}
-        <Card className="bg-slate-900/50 backdrop-blur-xl border-slate-800/50 mb-8 overflow-hidden relative group">
-          <div className="absolute inset-0 bg-gradient-to-br from-slate-800/30 to-slate-900/30" />
-          <CardHeader className="relative z-10">
+        {/* Recent History List */}
+        <Card className="bg-white border-slate-200 mb-8 overflow-hidden relative shadow-sm">
+          <CardHeader className="relative z-10 border-b border-slate-100 pb-4">
             <div className="flex items-center gap-3">
-              <div className="p-2.5 bg-gradient-to-br from-blue-600 to-sky-600 rounded-xl shadow-lg">
-                <Calendar className="h-6 w-6 text-white" />
+              <div className="p-2 bg-blue-50 border border-blue-100 rounded-lg">
+                <Calendar className="h-5 w-5 text-blue-600" />
               </div>
               <div>
-                <CardTitle className="text-2xl text-white">Recent Activity</CardTitle>
-                <CardDescription className="text-slate-400 text-base">Latest assessment results</CardDescription>
+                <CardTitle className="text-xl text-slate-900">Recent Activity</CardTitle>
+                <CardDescription className="text-slate-500 font-medium">Latest assessment results</CardDescription>
               </div>
             </div>
           </CardHeader>
-          <CardContent className="relative z-10">
-            <div className="space-y-3">
+          <CardContent className="relative z-10 pt-6 bg-slate-50/50">
+            <div className="space-y-4">
               {progressData.slice(0, 5).map((test, index) => (
                 <div
                   key={index}
-                  className="flex flex-col sm:flex-row sm:items-center justify-between p-5 bg-slate-800/30 backdrop-blur-sm border border-slate-700/50 rounded-xl hover:bg-slate-700/30 hover:border-slate-600/50 transition-all duration-300 group/item gap-4"
+                  className="flex flex-col sm:flex-row sm:items-center justify-between p-5 bg-white border border-slate-200 rounded-xl shadow-sm hover:shadow-md hover:border-blue-200 transition-all duration-300 group/item gap-4"
                   style={{
                     animation: `slideUp 0.5s ease-out ${index * 0.1}s backwards`,
                   }}
                 >
                   <div className="flex items-center gap-4">
-                    <div className={`p-3 rounded-xl ${
-                      test.score >= 80 ? "bg-gradient-to-br from-emerald-600 to-teal-600" :
-                      test.score >= 60 ? "bg-gradient-to-br from-blue-600 to-sky-600" :
-                      "bg-gradient-to-br from-amber-600 to-orange-600"
+                    <div className={`p-3 rounded-xl border ${
+                      test.score >= 80 ? "bg-emerald-50 border-emerald-100" :
+                      test.score >= 60 ? "bg-blue-50 border-blue-100" :
+                      "bg-amber-50 border-amber-100"
                     }`}>
-                      <Trophy className="h-5 w-5 text-white" />
+                      <Trophy className={`h-5 w-5 ${
+                        test.score >= 80 ? "text-emerald-600" :
+                        test.score >= 60 ? "text-blue-600" :
+                        "text-amber-600"
+                      }`} />
                     </div>
                     <div>
                       <div className="flex items-center gap-2 mb-1">
                         <span className={`text-2xl font-bold ${getScoreColor(test.score)}`}>
                           {test.score}%
                         </span>
-                        <Badge className="capitalize bg-slate-700/50 text-slate-300 border-slate-600/50">
+                        <Badge className="capitalize bg-slate-100 text-slate-600 border-slate-200 px-2 py-0">
                           {test.difficulty}
                         </Badge>
                       </div>
-                      <div className="flex items-center gap-3 text-sm text-slate-400">
+                      <div className="flex items-center gap-3 text-sm text-slate-500 font-medium">
                         <span className="flex items-center gap-1">
-                          <Clock className="h-3 w-3" />
+                          <Clock className="h-3.5 w-3.5" />
                           {formatTime(test.timeSpent)}
                         </span>
                         {test.company && test.company !== "general" && (
                           <span className="flex items-center gap-1 capitalize">
-                            <Building2 className="h-3 w-3" />
+                            <Building2 className="h-3.5 w-3.5" />
                             {test.company}
                           </span>
                         )}
@@ -857,10 +788,10 @@ export default function ProgressPage() {
                     </div>
                   </div>
                   <div className="text-right">
-                    <div className="text-sm font-medium text-white">{formatDate(test.date)}</div>
+                    <div className="text-sm font-bold text-slate-900">{formatDate(test.date)}</div>
                     {test.badge && (
-                      <div className="text-xs text-slate-400 mt-1">
-                        {getBadgeIcon(test.badge.level)} {test.badge.level}
+                      <div className="text-xs font-semibold text-slate-600 mt-1 flex justify-end items-center gap-1">
+                        {getBadgeIcon(test.badge.level)} <span className="capitalize">{test.badge.level}</span>
                       </div>
                     )}
                   </div>
@@ -875,9 +806,9 @@ export default function ProgressPage() {
           <Button
             onClick={() => navigate("/")}
             size="lg"
-            className="text-lg px-12 py-7 h-auto bg-gradient-to-r from-blue-600 to-sky-600 hover:from-blue-500 hover:to-sky-500 text-white font-semibold rounded-xl shadow-2xl shadow-blue-500/40 transition-all duration-300 group"
+            className="text-lg px-12 py-7 h-auto bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-lg shadow-blue-500/30 transition-all duration-300 group"
           >
-            <Zap className="h-6 w-6 mr-2 group-hover:scale-110 transition-transform duration-300" />
+            <Zap className="h-6 w-6 mr-2 text-yellow-300 group-hover:scale-110 transition-transform duration-300" />
             Continue Learning Journey
             <ArrowRight className="h-5 w-5 ml-2 group-hover:translate-x-1 transition-transform duration-300" />
           </Button>

@@ -162,7 +162,7 @@ export function AdaptiveDifficultySelector({ onDifficultySelect, selectedDifficu
                   <CardTitle className="text-xl text-white flex items-center gap-2">
                     AI-Powered Recommendation
                   </CardTitle>
-                  <CardDescription className="text-slate-400 mt-1">
+                  <CardDescription className="text-black-400 mt-1">
                     Based on your recent performance analysis
                   </CardDescription>
                 </div>
@@ -176,7 +176,7 @@ export function AdaptiveDifficultySelector({ onDifficultySelect, selectedDifficu
 
           <CardContent className="relative z-10">
             <div className="space-y-4">
-              <div className="bg-slate-800/50 backdrop-blur-sm rounded-xl p-5 border border-slate-700/50">
+              <div className="bg-white-800/50 backdrop-blur-sm rounded-xl p-5 border border-slate-700/50">
                 <div className="flex items-center justify-between mb-4">
                   <div>
                     <p className="font-semibold text-white text-lg mb-1">
@@ -206,7 +206,7 @@ export function AdaptiveDifficultySelector({ onDifficultySelect, selectedDifficu
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                  <div className="bg-slate-900/50 rounded-lg p-3 border border-slate-700/30">
+                  <div className="bg-white-900/50 rounded-lg p-3 border border-slate-700/30">
                     <div className="flex items-center gap-2 mb-1">
                       <Award className="h-4 w-4 text-sky-400" />
                       <span className="text-xs font-medium text-slate-400">Performance</span>
@@ -215,7 +215,7 @@ export function AdaptiveDifficultySelector({ onDifficultySelect, selectedDifficu
                     <div className="text-xs text-slate-500">Recent average</div>
                   </div>
 
-                  <div className="bg-slate-900/50 rounded-lg p-3 border border-slate-700/30">
+                  <div className="bg-white-900/50 rounded-lg p-3 border border-slate-700/30">
                     <div className="flex items-center gap-2 mb-1">
                       {getTrendIcon(progressData.recentTrend)}
                       <span className="text-xs font-medium text-slate-400">Trend</span>
@@ -226,7 +226,7 @@ export function AdaptiveDifficultySelector({ onDifficultySelect, selectedDifficu
                     <div className="text-xs text-slate-500">Current trajectory</div>
                   </div>
 
-                  <div className="bg-slate-900/50 rounded-lg p-3 border border-slate-700/30">
+                  <div className="bg-white-900/50 rounded-lg p-3 border border-slate-700/30">
                     <div className="flex items-center gap-2 mb-1">
                       <Target className="h-4 w-4 text-emerald-400" />
                       <span className="text-xs font-medium text-slate-400">Strong in</span>
@@ -261,7 +261,7 @@ export function AdaptiveDifficultySelector({ onDifficultySelect, selectedDifficu
 
       {/* Progress Summary */}
       {progressData && (
-        <Card className="bg-slate-900/50 backdrop-blur-xl border-slate-800/50 shadow-xl overflow-hidden relative group">
+        <Card className="bg-white-900/50 backdrop-blur-xl border-slate-800/50 shadow-xl overflow-hidden relative group">
           <div className="absolute inset-0 bg-gradient-to-br from-slate-800/30 to-slate-900/30" />
           
           <CardHeader className="relative z-10">
@@ -280,14 +280,14 @@ export function AdaptiveDifficultySelector({ onDifficultySelect, selectedDifficu
 
           <CardContent className="relative z-10">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="text-center bg-slate-800/50 rounded-xl p-5 border border-slate-700/50">
+              <div className="text-center bg-white-800/50 rounded-xl p-5 border border-slate-700/50">
                 <div className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-sky-400 to-blue-400 mb-2">
                   {progressData.averageScore}%
                 </div>
                 <div className="text-sm text-slate-400 font-medium">Recent Average</div>
               </div>
 
-              <div className="text-center bg-slate-800/50 rounded-xl p-5 border border-slate-700/50">
+              <div className="text-center bg-white-800/50 rounded-xl p-5 border border-slate-700/50">
                 <div className="flex items-center justify-center gap-2 mb-2">
                   {getTrendIcon(progressData.recentTrend)}
                   <span className={`text-2xl font-bold capitalize ${getTrendColor(progressData.recentTrend)}`}>
@@ -297,7 +297,7 @@ export function AdaptiveDifficultySelector({ onDifficultySelect, selectedDifficu
                 <div className="text-sm text-slate-400 font-medium">Performance Trend</div>
               </div>
 
-              <div className="text-center bg-slate-800/50 rounded-xl p-5 border border-slate-700/50">
+              <div className="text-center bg-white-800/50 rounded-xl p-5 border border-slate-700/50">
                 <div className="text-xl font-semibold text-white mb-2 truncate">
                   {progressData.strongTopics.length > 0 ? progressData.strongTopics[0] : "N/A"}
                 </div>
@@ -323,7 +323,7 @@ return (
                 key={diff.level}
                 onClick={() => onDifficultySelect(diff.level)}
                 // We force the background to stay slate-900 here
-                className={`group relative cursor-pointer flex flex-col h-full transition-all duration-500 overflow-hidden bg-slate-900/80 backdrop-blur-xl ${
+                className={`group relative cursor-pointer flex flex-col h-full transition-all duration-500 overflow-hidden bg-white-900/80 backdrop-blur-xl ${
                   isSelected
                     ? `border-2 ${diff.borderColor} scale-105 shadow-2xl`
                     : "border border-slate-800/50 hover:border-slate-700/50 hover:scale-105"
@@ -342,13 +342,13 @@ return (
                       {/* THIS is where the icon background changes color on select */}
                       <div
                         className={`p-3 rounded-xl shadow-lg transform group-hover:scale-110 transition-transform duration-300 ${
-                          isSelected ? `bg-gradient-to-br ${diff.color}` : "bg-slate-800 border border-slate-700"
+                          isSelected ? `bg-gradient-to-br ${diff.color}` : "bg-white-50 border border-slate-700"
                         }`}
                       >
                         <Icon className={`h-7 w-7 ${isSelected ? "text-white" : diff.textColor}`} />
                       </div>
                       <div>
-                        <CardTitle className={`text-xl ${isSelected ? "text-white" : "text-slate-200"}`}>
+                        <CardTitle className={`text-xl ${isSelected ? "text-purple-500" : "text-gray-600"}`}>
                           {diff.title}
                         </CardTitle>
                         <Badge
@@ -356,7 +356,7 @@ return (
                           className={`mt-1 text-xs ${
                             isSelected
                               ? `${diff.bgColor} ${diff.textColor} ${diff.borderColor}`
-                              : "bg-slate-800 text-slate-400 border-slate-700"
+                              : "bg-white-800 text-gray-700 border-slate-700"
                           }`}
                         >
                           {diff.level}
@@ -367,7 +367,7 @@ return (
                     {/* The Tick Mark stays */}
                     {isSelected && (
                       <div className="animate-scale-in">
-                        <div className="w-7 h-7 bg-white rounded-full flex items-center justify-center shadow-lg">
+                        <div className="w-7 h-7 bg-slate-100 rounded-full flex items-center justify-center shadow-lg">
                           <CheckCircle2 className="h-5 w-5 text-blue-600" />
                         </div>
                       </div>
@@ -376,7 +376,7 @@ return (
                 </CardHeader>
 
                 <CardContent className="relative z-10 flex flex-col flex-grow min-h-[100px]">
-                  <CardDescription className={`text-sm leading-relaxed ${isSelected ? "text-slate-300" : "text-slate-400"}`}>
+                  <CardDescription className={`text-sm leading-relaxed ${isSelected ? "text-gray-600" : "text-black"}`}>
                     {diff.description}
                   </CardDescription>
 
@@ -395,7 +395,7 @@ return (
                         onDifficultySelect(diff.level);
                         if (onStartTest) onStartTest();
                       }}
-                      className="w-fit flex items-center justify-start text-sm font-semibold transition-colors duration-300 text-white hover:text-slate-300"
+                      className="w-fit flex items-center justify-start text-sm font-semibold transition-colors duration-300 text-black hover:text-slate-700"
                     >
                       Quick Start <ArrowRight className="ml-2 h-4 w-4 transform group-hover:translate-x-1 transition-transform duration-300" />
                     </button>
