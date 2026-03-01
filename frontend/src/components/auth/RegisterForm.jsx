@@ -7,64 +7,49 @@ import { User, Mail, Lock, Loader2 } from "lucide-react"
 
 export const RegisterForm = ({ onToggleMode }) => {
   const [formData, setFormData] = useState({
-    username: "",
-    email: "",
-    password: "",
+    name:            "",
+    email:           "",
+    password:        "",
     confirmPassword: "",
-    firstName: "",
-    lastName: "",
   })
-  const [error, setError] = useState("")
+  const [error, setError]     = useState("")
   const [loading, setLoading] = useState(false)
 
   const { register } = useAuth()
 
   const handleChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value,
-    })
+    setFormData({ ...formData, [e.target.name]: e.target.value })
+    if (error) setError("")
   }
 
   const handleSubmit = async (e) => {
     e.preventDefault()
     setError("")
 
-    // Validation
-    if (!formData.username || !formData.email || !formData.password) {
+    if (!formData.name || !formData.email || !formData.password) {
       setError("Please fill in all required fields")
       return
     }
-
+    if (formData.name.trim().length < 2) {
+      setError("Name must be at least 2 characters")
+      return
+    }
+    if (formData.password.length < 6) {
+      setError("Password must be at least 6 characters")
+      return
+    }
     if (formData.password !== formData.confirmPassword) {
       setError("Passwords do not match")
       return
     }
 
-    if (formData.password.length < 6) {
-      setError("Password must be at least 6 characters long")
-      return
-    }
-
-    if (formData.username.length < 3) {
-      setError("Username must be at least 3 characters long")
-      return
-    }
-
     setLoading(true)
-
     const result = await register({
-      username: formData.username,
-      email: formData.email,
+      name:     formData.name.trim(),
+      email:    formData.email,
       password: formData.password,
-      firstName: formData.firstName,
-      lastName: formData.lastName,
     })
-
-    if (!result.success) {
-      setError(result.error)
-    }
-
+    if (!result.success) setError(result.error)
     setLoading(false)
   }
 
@@ -72,8 +57,11 @@ export const RegisterForm = ({ onToggleMode }) => {
     <Card className="w-full max-w-md mx-auto shadow-2xl">
       <CardHeader className="text-center space-y-2 pb-6">
         <CardTitle className="text-3xl font-bold">Create Your Account</CardTitle>
-        <CardDescription className="text-base">Sign up to start your aptitude test preparation journey</CardDescription>
+        <CardDescription className="text-base">
+          Sign up to start your aptitude test preparation journey
+        </CardDescription>
       </CardHeader>
+
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
           {error && (
@@ -82,52 +70,21 @@ export const RegisterForm = ({ onToggleMode }) => {
             </Alert>
           )}
 
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-2">
-              <label htmlFor="firstName" className="text-sm font-medium text-foreground">
-                First Name
-              </label>
-              <input
-                id="firstName"
-                name="firstName"
-                type="text"
-                value={formData.firstName}
-                onChange={handleChange}
-                className="w-full px-3 py-2.5 border-2 border-border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
-                placeholder="John"
-              />
-            </div>
-            <div className="space-y-2">
-              <label htmlFor="lastName" className="text-sm font-medium text-foreground">
-                Last Name
-              </label>
-              <input
-                id="lastName"
-                name="lastName"
-                type="text"
-                value={formData.lastName}
-                onChange={handleChange}
-                className="w-full px-3 py-2.5 border-2 border-border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
-                placeholder="Doe"
-              />
-            </div>
-          </div>
-
           <div className="space-y-2">
-            <label htmlFor="username" className="text-sm font-medium text-foreground flex items-center">
+            <label htmlFor="name" className="text-sm font-medium text-foreground flex items-center">
               <User className="h-4 w-4 mr-2" />
-              Username <span className="text-destructive ml-1">*</span>
+              Full Name <span className="text-destructive ml-1">*</span>
             </label>
             <input
-              id="username"
-              name="username"
+              id="name"
+              name="name"
               type="text"
               required
-              value={formData.username}
+              value={formData.name}
               onChange={handleChange}
               className="w-full px-4 py-2.5 border-2 border-border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
-              placeholder="Choose a unique username"
-              autoComplete="username"
+              placeholder="Enter your full name"
+              autoComplete="name"
             />
           </div>
 
@@ -162,7 +119,7 @@ export const RegisterForm = ({ onToggleMode }) => {
               value={formData.password}
               onChange={handleChange}
               className="w-full px-4 py-2.5 border-2 border-border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
-              placeholder="Create a strong password"
+              placeholder="At least 6 characters"
               autoComplete="new-password"
             />
             <p className="text-xs text-muted-foreground">Must be at least 6 characters long</p>
@@ -181,12 +138,16 @@ export const RegisterForm = ({ onToggleMode }) => {
               value={formData.confirmPassword}
               onChange={handleChange}
               className="w-full px-4 py-2.5 border-2 border-border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
-              placeholder="Confirm your password"
+              placeholder="Repeat your password"
               autoComplete="new-password"
             />
           </div>
 
-          <Button type="submit" disabled={loading} className="w-full py-6 text-base font-semibold mt-6">
+          <Button
+            type="submit"
+            disabled={loading}
+            className="w-full py-6 text-base font-semibold mt-2"
+          >
             {loading ? (
               <>
                 <Loader2 className="h-5 w-5 mr-2 animate-spin" />

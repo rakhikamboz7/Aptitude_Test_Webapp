@@ -48,7 +48,7 @@ export const Navigation = () => {
               <>
                 <div className="text-right hidden sm:block">
                   <p className="text-sm font-medium text-foreground">
-                    {user.profile?.firstName || user.username}
+                    {user.profile?.firstName || user.name}
                   </p>
                   <p className="text-xs text-muted-foreground">
                     {user.statistics?.totalAssessments || 0} tests

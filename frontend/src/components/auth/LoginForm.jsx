@@ -6,40 +6,29 @@ import { Alert, AlertDescription } from "../ui/alert"
 import { Mail, Lock, Loader2 } from "lucide-react"
 
 export const LoginForm = ({ onToggleMode }) => {
-  const [formData, setFormData] = useState({
-    email: "",
-    password: "",
-  })
-  const [error, setError] = useState("")
-  const [loading, setLoading] = useState(false)
+  const [formData, setFormData] = useState({ email: "", password: "" })
+  const [error, setError]       = useState("")
+  const [loading, setLoading]   = useState(false)
 
   const { login } = useAuth()
 
   const handleChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value,
-    })
+    setFormData({ ...formData, [e.target.name]: e.target.value })
+    if (error) setError("")
   }
 
   const handleSubmit = async (e) => {
     e.preventDefault()
     setError("")
-    
-    // Basic validation
+
     if (!formData.email || !formData.password) {
       setError("Please fill in all fields")
       return
     }
 
     setLoading(true)
-
     const result = await login(formData.email, formData.password)
-
-    if (!result.success) {
-      setError(result.error)
-    }
-
+    if (!result.success) setError(result.error)
     setLoading(false)
   }
 
@@ -47,8 +36,11 @@ export const LoginForm = ({ onToggleMode }) => {
     <Card className="w-full max-w-md mx-auto shadow-2xl">
       <CardHeader className="text-center space-y-2 pb-6">
         <CardTitle className="text-3xl font-bold">Welcome Back</CardTitle>
-        <CardDescription className="text-base">Sign in to your account to continue your learning journey</CardDescription>
+        <CardDescription className="text-base">
+          Sign in to your account to continue your learning journey
+        </CardDescription>
       </CardHeader>
+
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-5">
           {error && (
@@ -93,7 +85,11 @@ export const LoginForm = ({ onToggleMode }) => {
             />
           </div>
 
-          <Button type="submit" disabled={loading} className="w-full py-6 text-base font-semibold">
+          <Button
+            type="submit"
+            disabled={loading}
+            className="w-full py-6 text-base font-semibold"
+          >
             {loading ? (
               <>
                 <Loader2 className="h-5 w-5 mr-2 animate-spin" />
@@ -107,7 +103,7 @@ export const LoginForm = ({ onToggleMode }) => {
 
         <div className="mt-6 text-center">
           <p className="text-sm text-muted-foreground">
-            Don't have an account?{" "}
+            Don&apos;t have an account?{" "}
             <button
               type="button"
               onClick={onToggleMode}

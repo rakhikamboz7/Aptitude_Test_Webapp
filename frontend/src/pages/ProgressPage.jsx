@@ -42,104 +42,166 @@ export default function ProgressPage() {
   const chartCanvasRef = useRef(null)
   const gaugeCanvasRef = useRef(null)
 
-  useEffect(() => {
-    const loadProgressData = () => {
-      try {
-        const history = JSON.parse(localStorage.getItem("progressHistory") || "[]")
-        setProgressData(history)
+// ─── Replace the loadProgressData useEffect in ProgressPage.jsx ───────────────
+// Keep all other code (charts, render, etc.) exactly the same.
+// Only replace the useEffect that calls loadProgressData.
 
-        if (history.length > 0) {
-          // Calculate statistics
-          const totalTests = history.length
-          const averageScore = Math.round(history.reduce((sum, test) => sum + test.score, 0) / totalTests)
-          const totalTimeSpent = history.reduce((sum, test) => sum + test.timeSpent, 0)
+// ADD this import at the top of ProgressPage.jsx:
+// import { useAuth } from "../contexts/auth-context"
 
-          // Badge statistics
+// ADD this inside the component (already there):
+// const { user, logout, token } = useAuth()   ← add "token" here
+
+// REPLACE the existing loadProgressData useEffect with this:
+
+useEffect(() => {
+  const loadProgressData = async () => {
+    try {
+      setLoading(true)
+
+      // Primary: fetch from MongoDB if logged in
+      const token = localStorage.getItem("token")
+      if (token) {
+        const response = await fetch(
+          `${import.meta.env.VITE_API_URL || "http://localhost:5000"}/api/assessments`,
+          { headers: { Authorization: `Bearer ${token}` } }
+        )
+        const data = await response.json()
+
+        if (data.success && data.assessments.length > 0) {
+          // Normalize to the shape ProgressPage already expects
+          const history = data.assessments.map((a) => ({
+            score: a.score,
+            difficulty: a.difficulty,
+            timeSpent: a.timeSpent || 0,
+            company: a.company || "general",
+            badge: a.badge || null,
+            breakdown: {
+              byTopic: a.topicBreakdown
+                ? a.topicBreakdown instanceof Map
+                  ? Object.fromEntries(a.topicBreakdown)
+                  : a.topicBreakdown
+                : {},
+            },
+            date: a.completedAt || new Date().toISOString(),
+          }))
+
+          setProgressData(history)
+
+          // Use pre-computed statistics from MongoDB
+          const s = data.statistics
           const badgeCounts = {
-            beginner: 0,
-            intermediate: 0,
-            advanced: 0,
+            beginner: s.badgesEarned?.beginner || 0,
+            intermediate: s.badgesEarned?.intermediate || 0,
+            advanced: s.badgesEarned?.advanced || 0,
           }
-          history.forEach((test) => {
-            if (test.badge?.level) {
-              badgeCounts[test.badge.level]++
-            }
-          })
-
           setBadgeStats(badgeCounts)
 
-          // Calculate trend
+          // Trend
           let trend = "stable"
           if (history.length >= 3) {
-            const recent = history.slice(0, 3)
-            const older = history.slice(-3)
-            const recentAvg = recent.reduce((sum, test) => sum + test.score, 0) / recent.length
-            const olderAvg = older.reduce((sum, test) => sum + test.score, 0) / older.length
-
+            const recentAvg = history.slice(0, 3).reduce((sum, t) => sum + t.score, 0) / 3
+            const olderAvg = history.slice(-3).reduce((sum, t) => sum + t.score, 0) / 3
             if (recentAvg > olderAvg + 5) trend = "improving"
             else if (recentAvg < olderAvg - 5) trend = "declining"
           }
 
-          // Find best performance
-          const bestTest = history.reduce((best, current) => (current.score > best.score ? current : best))
-
-          // Company analysis
-          const companyStats = {}
-          history.forEach((test) => {
-            const company = test.company || "general"
-            if (!companyStats[company]) {
-              companyStats[company] = { tests: 0, totalScore: 0, avgScore: 0 }
-            }
-            companyStats[company].tests++
-            companyStats[company].totalScore += test.score
-          })
-
-          Object.keys(companyStats).forEach((company) => {
-            companyStats[company].avgScore = Math.round(
-              companyStats[company].totalScore / companyStats[company].tests
-            )
-          })
-
-          // Topic analysis
-          const topicStats = {}
-          history.forEach((test) => {
-            if (test.breakdown?.byTopic) {
-              Object.entries(test.breakdown.byTopic).forEach(([topic, data]) => {
-                if (!topicStats[topic]) {
-                  topicStats[topic] = { correct: 0, total: 0, tests: 0 }
-                }
-                topicStats[topic].correct += data.correct
-                topicStats[topic].total += data.total
-                topicStats[topic].tests += 1
-              })
-            }
-          })
-
-          // Calculate accuracy for each topic
-          Object.keys(topicStats).forEach((topic) => {
-            topicStats[topic].accuracy = Math.round((topicStats[topic].correct / topicStats[topic].total) * 100)
-          })
+          const bestTest = history.reduce((best, cur) => (cur.score > best.score ? cur : best))
 
           setStats({
-            totalTests,
-            averageScore,
-            totalTimeSpent,
+            totalTests: s.totalAssessments || history.length,
+            averageScore: s.averageScore || 0,
+            totalTimeSpent: history.reduce((sum, t) => sum + t.timeSpent, 0),
             trend,
-            bestScore: bestTest.score,
+            bestScore: s.bestScore || bestTest.score,
             bestDifficulty: bestTest.difficulty,
-            topicStats,
-            companyStats,
+            topicStats: s.topicStats || {},
+            companyStats: s.companyStats || {},
           })
-        }
-      } catch (error) {
-        console.error("Error loading progress data:", error)
-      } finally {
-        setLoading(false)
-      }
-    }
 
-    loadProgressData()
-  }, [])
+          return // Done — MongoDB data loaded successfully
+        }
+      }
+
+      // Fallback: use localStorage if not logged in or DB returned nothing
+      const localHistory = JSON.parse(localStorage.getItem("progressHistory") || "[]")
+      if (localHistory.length > 0) {
+        setProgressData(localHistory)
+
+        const totalTests = localHistory.length
+        const averageScore = Math.round(
+          localHistory.reduce((sum, t) => sum + t.score, 0) / totalTests
+        )
+
+        const badgeCounts = { beginner: 0, intermediate: 0, advanced: 0 }
+        localHistory.forEach((t) => {
+          if (t.badge?.level && badgeCounts[t.badge.level] !== undefined) {
+            badgeCounts[t.badge.level]++
+          }
+        })
+        setBadgeStats(badgeCounts)
+
+        let trend = "stable"
+        if (localHistory.length >= 3) {
+          const recentAvg = localHistory.slice(0, 3).reduce((sum, t) => sum + t.score, 0) / 3
+          const olderAvg = localHistory.slice(-3).reduce((sum, t) => sum + t.score, 0) / 3
+          if (recentAvg > olderAvg + 5) trend = "improving"
+          else if (recentAvg < olderAvg - 5) trend = "declining"
+        }
+
+        const bestTest = localHistory.reduce((best, cur) => (cur.score > best.score ? cur : best))
+
+        const companyStats = {}
+        localHistory.forEach((t) => {
+          const c = t.company || "general"
+          if (!companyStats[c]) companyStats[c] = { tests: 0, totalScore: 0, avgScore: 0 }
+          companyStats[c].tests++
+          companyStats[c].totalScore += t.score
+        })
+        Object.keys(companyStats).forEach((c) => {
+          companyStats[c].avgScore = Math.round(companyStats[c].totalScore / companyStats[c].tests)
+        })
+
+        const topicStats = {}
+        localHistory.forEach((t) => {
+          if (t.breakdown?.byTopic) {
+            Object.entries(t.breakdown.byTopic).forEach(([topic, data]) => {
+              if (!topicStats[topic]) topicStats[topic] = { correct: 0, total: 0, accuracy: 0 }
+              topicStats[topic].correct += data.correct || 0
+              topicStats[topic].total += data.total || 0
+            })
+          }
+        })
+        Object.keys(topicStats).forEach((t) => {
+          topicStats[t].accuracy =
+            topicStats[t].total > 0
+              ? Math.round((topicStats[t].correct / topicStats[t].total) * 100)
+              : 0
+        })
+
+        setStats({
+          totalTests,
+          averageScore,
+          totalTimeSpent: localHistory.reduce((sum, t) => sum + t.timeSpent, 0),
+          trend,
+          bestScore: bestTest.score,
+          bestDifficulty: bestTest.difficulty,
+          topicStats,
+          companyStats,
+        })
+      }
+    } catch (error) {
+      console.error("Error loading progress data:", error)
+      // On error, silently fall back to localStorage
+      const localHistory = JSON.parse(localStorage.getItem("progressHistory") || "[]")
+      setProgressData(localHistory)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  loadProgressData()
+}, []) // keep dependency array empty — runs once on mount
 
   // Mouse tracking for parallax
   useEffect(() => {

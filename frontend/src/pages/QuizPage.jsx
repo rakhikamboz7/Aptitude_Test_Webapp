@@ -7,9 +7,9 @@ import { Badge } from "../components/ui/badge"
 import { Navigation } from "../components/navigation"
 import { Clock, CheckCircle2, Save, Brain, ArrowRight, ArrowLeft, Send, Loader2, Building2, Target } from "lucide-react"
 
-const getAnsweredCount = (selectedAnswers) => {
-  return Object.keys(selectedAnswers).length
-}
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000"
+
+const getAnsweredCount = (selectedAnswers) => Object.keys(selectedAnswers).length
 
 const formatTime = (seconds) => {
   const minutes = Math.floor(seconds / 60)
@@ -19,86 +19,92 @@ const formatTime = (seconds) => {
 
 export default function QuizPage() {
   const navigate = useNavigate()
-  const [quizData, setQuizData] = useState(null)
+
+  // quizState holds: assessmentId, questions, totalQuestions, timeLimit, difficulty, companyName
+  const [quizState, setQuizState]                   = useState(null)
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0)
-  const [selectedAnswers, setSelectedAnswers] = useState({})
-  const [timeRemaining, setTimeRemaining] = useState(0)
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState(null)
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  const [startTime, setStartTime] = useState(0)
-  const [showSubmitConfirm, setShowSubmitConfirm] = useState(false)
-  const [autoSaveStatus, setAutoSaveStatus] = useState("")
+  const [selectedAnswers, setSelectedAnswers]        = useState({})  // { questionIndex: "A"|"B"|"C"|"D" }
+  const [timeRemaining, setTimeRemaining]            = useState(0)
+  const [isLoading, setIsLoading]                    = useState(true)
+  const [error, setError]                            = useState(null)
+  const [isSubmitting, setIsSubmitting]              = useState(false)
+  const [startTime, setStartTime]                    = useState(0)
+  const [showSubmitConfirm, setShowSubmitConfirm]    = useState(false)
+  const [autoSaveStatus, setAutoSaveStatus]          = useState("")
   const [criticalTimeWarning, setCriticalTimeWarning] = useState(false)
   const [isGeneratingQuestions, setIsGeneratingQuestions] = useState(true)
-  const [selectedCompany, setSelectedCompany] = useState("")
-  const autoSaveIntervalRef = useRef(null)
-  const warningShownRef = useRef(false)
-  const timerRef = useRef(null)
 
+  const warningShownRef      = useRef(false)
+  const timerRef             = useRef(null)
+  const autoSaveIntervalRef  = useRef(null)
+
+  // ─── Timer ────────────────────────────────────────────────────────────────
   useEffect(() => {
-    if (timeRemaining > 0 && quizData) {
+    if (timeRemaining > 0 && quizState) {
       timerRef.current = setInterval(() => {
         setTimeRemaining((prev) => {
           if (prev <= 1) {
             submitQuiz()
             return 0
           }
-
           if (prev === 300 && !warningShownRef.current) {
             setCriticalTimeWarning(true)
             warningShownRef.current = true
           }
-
           return prev - 1
         })
       }, 1000)
-
-      return () => {
-        if (timerRef.current) {
-          clearInterval(timerRef.current)
-        }
-      }
+      return () => clearInterval(timerRef.current)
     }
-  }, [timeRemaining, quizData])
+  }, [timeRemaining, quizState])
 
+  // ─── Load quiz from backend ────────────────────────────────────────────────
   useEffect(() => {
     const loadQuiz = async () => {
       try {
         setIsGeneratingQuestions(true)
-        const difficulty = localStorage.getItem("selectedDifficulty") || "medium"
-        const company = localStorage.getItem("selectedCompany") || "general"
-        setSelectedCompany(company)
-        
-        const topics = ["numerical", "logical", "verbal", "analytical"]
+
+        const difficulty  = localStorage.getItem("selectedDifficulty") || "medium"
+        const companyName = localStorage.getItem("selectedCompany")    || "general"
+
+        const token = localStorage.getItem("token") || ""
 
         const controller = new AbortController()
-        const timeoutId = setTimeout(() => controller.abort(), 20000)
+        const timeoutId  = setTimeout(() => controller.abort(), 30000) // 30s timeout
 
-        const response = await fetch("http://localhost:5000/api/questions/generate", {
-          method: "POST",
+        const response = await fetch(`${API_URL}/api/assessments/start`, {
+          method:  "POST",
           headers: {
-            "Content-Type": "application/json",
+            "Content-Type":  "application/json",
+            Authorization:   `Bearer ${token}`,
           },
-          body: JSON.stringify({ difficulty, topics, company }),
+          body:   JSON.stringify({ companyName, difficulty }), // ✅ correct field name
           signal: controller.signal,
         })
 
         clearTimeout(timeoutId)
+
+        // ✅ Backend returns: { success, assessmentId, questions, totalQuestions, timeLimit, difficulty, companyName }
         const data = await response.json()
 
-        if (data.success) {
-          setQuizData(data.data)
-          setTimeRemaining(data.data.timeLimit)
-          setStartTime(Date.now())
-
-          const savedAnswers = localStorage.getItem(`quiz_${data.data.sessionId}_answers`)
-          if (savedAnswers) {
-            setSelectedAnswers(JSON.parse(savedAnswers))
-          }
-        } else {
-          setError(data.message || "Failed to load quiz questions")
+        if (!data.success) {
+          setError(data.error || "Failed to load quiz questions")
+          return
         }
+
+        // ✅ Flat response — no data.data nesting
+        setQuizState({
+          assessmentId:   data.assessmentId,
+          questions:      data.questions,       // already stripped of correctAnswer
+          totalQuestions: data.totalQuestions,
+          timeLimit:      data.timeLimit,
+          difficulty:     data.difficulty,
+          companyName:    data.companyName,
+        })
+
+        setTimeRemaining(data.timeLimit)        // ✅ was data.data.timeLimit (crash)
+        setStartTime(Date.now())
+
       } catch (err) {
         console.error("Quiz loading error:", err)
         if (err.name === "AbortError") {
@@ -115,122 +121,112 @@ export default function QuizPage() {
     loadQuiz()
   }, [])
 
+  // ─── Auto-save answers to localStorage ────────────────────────────────────
   useEffect(() => {
-    if (quizData && Object.keys(selectedAnswers).length > 0) {
+    if (quizState && Object.keys(selectedAnswers).length > 0) {
       autoSaveIntervalRef.current = setInterval(() => {
-        localStorage.setItem(`quiz_${quizData.sessionId}_answers`, JSON.stringify(selectedAnswers))
+        localStorage.setItem(`quiz_${quizState.assessmentId}_answers`, JSON.stringify(selectedAnswers))
         setAutoSaveStatus("Answers saved")
         setTimeout(() => setAutoSaveStatus(""), 2000)
       }, 30000)
-
-      return () => {
-        if (autoSaveIntervalRef.current) {
-          clearInterval(autoSaveIntervalRef.current)
-        }
-      }
+      return () => clearInterval(autoSaveIntervalRef.current)
     }
-  }, [selectedAnswers, quizData])
+  }, [selectedAnswers, quizState])
 
-  const handleAnswerSelect = (answerIndex) => {
-    if (!quizData) return
-
-    const currentQuestion = quizData.questions[currentQuestionIndex]
-    const newAnswers = {
-      ...selectedAnswers,
-      [currentQuestion.id]: answerIndex,
-    }
+  // ─── Select answer ─────────────────────────────────────────────────────────
+  // selectedAnswers = { 0: "A", 1: "C", 3: "B" }  (key = questionIndex)
+  const handleAnswerSelect = (letterAnswer) => {
+    if (!quizState) return
+    const newAnswers = { ...selectedAnswers, [currentQuestionIndex]: letterAnswer }
     setSelectedAnswers(newAnswers)
-    localStorage.setItem(`quiz_${quizData.sessionId}_answers`, JSON.stringify(newAnswers))
+    localStorage.setItem(`quiz_${quizState.assessmentId}_answers`, JSON.stringify(newAnswers))
   }
 
+  // ─── Submit quiz ───────────────────────────────────────────────────────────
   const submitQuiz = async () => {
+    if (isSubmitting) return
+    clearInterval(timerRef.current)
     setIsSubmitting(true)
     setShowSubmitConfirm(false)
 
     try {
-      const timeSpent = Math.round((Date.now() - startTime) / 1000)
-      const answersArray = quizData.questions.map((question) =>
-        selectedAnswers[question.id] !== undefined ? ["A", "B", "C", "D"][selectedAnswers[question.id]] : null,
+      // Build answers array for backend: [{ questionIndex, selectedAnswer }]
+      // ✅ Backend expects selectedAnswer as "A"|"B"|"C"|"D"|null
+      const answers = quizState.questions.map((_, index) => ({
+        questionIndex:  index,
+        selectedAnswer: selectedAnswers[index] || null,
+      }))
+
+      const token = localStorage.getItem("token") || ""
+
+      const response = await fetch(
+        `${API_URL}/api/assessments/${quizState.assessmentId}/submit`,
+        {
+          method:  "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization:  `Bearer ${token}`,
+          },
+          body: JSON.stringify({ answers }),
+        }
       )
 
-      const response = await fetch("http://localhost:5000/api/feedback/generate", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          answers: answersArray,
-          questions: quizData.questions,
-          difficulty: quizData.difficulty,
-          timeSpent,
-          company: selectedCompany,
-        }),
-      })
+      const data = await response.json()
 
-      const results = await response.json()
-
-      if (results.success) {
-        localStorage.removeItem(`quiz_${quizData.sessionId}_answers`)
-        localStorage.setItem("quizResults", JSON.stringify(results.data))
-        
-        // Save to progress history
-        const history = JSON.parse(localStorage.getItem("progressHistory") || "[]")
-        history.unshift({
-          score: results.data.score,
-          difficulty: quizData.difficulty,
-          timeSpent: results.data.timeSpent * 60,
-          company: selectedCompany,
-          badge: results.data.badge,
-          breakdown: {
-            byTopic: results.data.feedback.topicBreakdown
-          },
-          date: new Date().toISOString(),
-        })
-        localStorage.setItem("progressHistory", JSON.stringify(history.slice(0, 20)))
-        
-        navigate("/results")
-      } else {
-        setError(results.message || "Failed to submit quiz. Please try again.")
+      if (!data.success) {
+        setError(data.error || "Failed to submit quiz. Please try again.")
+        setIsSubmitting(false)
+        return
       }
+
+      // ✅ Backend returns: { success, result: { score, accuracy, correctAnswers, totalQuestions, totalTime, badge, feedback } }
+      const result = data.result
+
+      // Save to localStorage for ResultsPage to read
+      localStorage.removeItem(`quiz_${quizState.assessmentId}_answers`)
+      localStorage.setItem("quizResults", JSON.stringify(result))
+
+      // Also save to progressHistory for ProgressPage fallback
+      const history = JSON.parse(localStorage.getItem("progressHistory") || "[]")
+      history.unshift({
+        score:      result.score,
+        difficulty: quizState.difficulty,
+        timeSpent:  result.totalTime || 0,
+        company:    quizState.companyName || "general",
+        badge:      result.badge || null,
+        breakdown:  { byTopic: result.feedback?.topicBreakdown || {} },
+        date:       new Date().toISOString(),
+      })
+      localStorage.setItem("progressHistory", JSON.stringify(history.slice(0, 20)))
+
+      navigate("/results")
     } catch (err) {
       console.error("Quiz submission error:", err)
       setError("Network error during submission. Please try again.")
-    } finally {
       setIsSubmitting(false)
     }
   }
 
   const handleManualSave = () => {
-    if (quizData && Object.keys(selectedAnswers).length > 0) {
-      localStorage.setItem(`quiz_${quizData.sessionId}_answers`, JSON.stringify(selectedAnswers))
+    if (quizState && Object.keys(selectedAnswers).length > 0) {
+      localStorage.setItem(`quiz_${quizState.assessmentId}_answers`, JSON.stringify(selectedAnswers))
       setAutoSaveStatus("Answers saved manually")
       setTimeout(() => setAutoSaveStatus(""), 3000)
     }
   }
 
-  const goToNextQuestion = () => {
-    if (currentQuestionIndex < quizData.totalQuestions - 1) {
-      setCurrentQuestionIndex(currentQuestionIndex + 1)
-    }
-  }
-
-  const goToPreviousQuestion = () => {
-    if (currentQuestionIndex > 0) {
-      setCurrentQuestionIndex(currentQuestionIndex - 1)
-    }
-  }
+  const goToNextQuestion     = () => setCurrentQuestionIndex((i) => Math.min(i + 1, quizState.totalQuestions - 1))
+  const goToPreviousQuestion = () => setCurrentQuestionIndex((i) => Math.max(i - 1, 0))
 
   const handleEarlySubmit = () => {
-    const answeredCount = getAnsweredCount(selectedAnswers)
-    const unansweredCount = quizData.totalQuestions - answeredCount
-    if (unansweredCount > 0) {
-      setShowSubmitConfirm(true)
-    } else {
-      submitQuiz()
-    }
+    const unanswered = quizState.totalQuestions - getAnsweredCount(selectedAnswers)
+    if (unanswered > 0) setShowSubmitConfirm(true)
+    else submitQuiz()
   }
 
+  // ─── Loading state ─────────────────────────────────────────────────────────
   if (isLoading || isGeneratingQuestions) {
+    const company = localStorage.getItem("selectedCompany") || "general"
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center space-y-6 px-4">
@@ -238,7 +234,7 @@ export default function QuizPage() {
           <div>
             <h2 className="text-3xl font-bold mb-2">Generating Your Assessment</h2>
             <p className="text-xl text-muted-foreground mb-4">
-              {selectedCompany !== "general" && `${selectedCompany.toUpperCase()} - `}
+              {company !== "general" && `${company.toUpperCase()} — `}
               Creating 15 personalized questions...
             </p>
           </div>
@@ -253,6 +249,7 @@ export default function QuizPage() {
     )
   }
 
+  // ─── Error state ───────────────────────────────────────────────────────────
   if (error) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center px-4">
@@ -271,11 +268,11 @@ export default function QuizPage() {
     )
   }
 
-  if (!quizData) return null
+  if (!quizState) return null
 
-  const currentQuestion = quizData.questions[currentQuestionIndex]
-  const progress = ((currentQuestionIndex + 1) / quizData.totalQuestions) * 100
-  const answeredCount = getAnsweredCount(selectedAnswers)
+  const currentQuestion = quizState.questions[currentQuestionIndex]
+  const progress        = ((currentQuestionIndex + 1) / quizState.totalQuestions) * 100
+  const answeredCount   = getAnsweredCount(selectedAnswers)
 
   return (
     <div className="min-h-screen bg-background">
@@ -291,37 +288,39 @@ export default function QuizPage() {
       )}
 
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        {/* Enhanced Header */}
+        {/* Header */}
         <div className="mb-6">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6">
             <div>
               <h1 className="text-3xl font-bold text-foreground flex items-center space-x-3">
                 <Brain className="h-8 w-8 text-primary" />
                 <span>
-                  {selectedCompany !== "general" && (
-                    <span className="text-primary">{selectedCompany.toUpperCase()} </span>
+                  {quizState.companyName !== "general" && (
+                    <span className="text-primary">{quizState.companyName.toUpperCase()} </span>
                   )}
                   Assessment
                 </span>
               </h1>
               <p className="text-muted-foreground mt-2 flex items-center space-x-2">
                 <Target className="h-4 w-4" />
-                <span>Question {currentQuestionIndex + 1} of {quizData.totalQuestions}</span>
+                <span>Question {currentQuestionIndex + 1} of {quizState.totalQuestions}</span>
               </p>
             </div>
             <div className="flex items-center space-x-3 mt-4 sm:mt-0">
-              {selectedCompany !== "general" && (
+              {quizState.companyName !== "general" && (
                 <Badge variant="outline" className="px-3 py-1 flex items-center space-x-1">
                   <Building2 className="h-3 w-3" />
-                  <span className="capitalize">{selectedCompany}</span>
+                  <span className="capitalize">{quizState.companyName}</span>
                 </Badge>
               )}
               <Badge variant="outline" className="text-sm capitalize px-3 py-1">
-                {quizData.difficulty}
+                {quizState.difficulty}
               </Badge>
               <div
                 className={`flex items-center space-x-2 px-4 py-2 rounded-xl font-mono ${
-                  timeRemaining < 300 ? "bg-destructive/20 text-destructive animate-pulse" : "bg-muted text-muted-foreground"
+                  timeRemaining < 300
+                    ? "bg-destructive/20 text-destructive animate-pulse"
+                    : "bg-muted text-muted-foreground"
                 }`}
               >
                 <Clock className="h-5 w-5" />
@@ -335,7 +334,7 @@ export default function QuizPage() {
           <div className="flex items-center justify-between text-sm">
             <div className="flex items-center space-x-4">
               <Badge variant="secondary" className="px-3 py-1">
-                {answeredCount}/{quizData.totalQuestions} answered
+                {answeredCount}/{quizState.totalQuestions} answered
               </Badge>
               <span className="text-muted-foreground">
                 Topic: <span className="font-medium capitalize text-foreground">{currentQuestion.topic}</span>
@@ -348,12 +347,7 @@ export default function QuizPage() {
                   <span>{autoSaveStatus}</span>
                 </div>
               )}
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleManualSave}
-                className="h-8 px-3"
-              >
+              <Button variant="outline" size="sm" onClick={handleManualSave} className="h-8 px-3">
                 <Save className="h-3 w-3 mr-1" />
                 Save
               </Button>
@@ -366,44 +360,49 @@ export default function QuizPage() {
           <CardHeader className="pb-4 bg-muted/30">
             <div className="flex items-start justify-between">
               <div className="flex-1">
-                <CardTitle className="text-xl leading-relaxed mb-2">{currentQuestion.question}</CardTitle>
-                <CardDescription className="text-base">Select the best answer from the options below.</CardDescription>
+                <CardTitle className="text-xl leading-relaxed mb-2">
+                  {currentQuestion.questionText}
+                </CardTitle>
+                <CardDescription className="text-base">
+                  Select the best answer from the options below.
+                </CardDescription>
               </div>
-              <Badge variant="outline" className="ml-4 capitalize">
-                Q{currentQuestionIndex + 1}
-              </Badge>
+              <Badge variant="outline" className="ml-4">Q{currentQuestionIndex + 1}</Badge>
             </div>
           </CardHeader>
           <CardContent className="pt-6">
             <div className="space-y-3">
-              {currentQuestion.options.map((option, index) => (
-                <button
-                  key={index}
-                  onClick={() => handleAnswerSelect(index)}
-                  className={`w-full p-5 text-left rounded-xl border-2 transition-all duration-200 hover:scale-[1.02] ${
-                    selectedAnswers[currentQuestion.id] === index
-                      ? "border-primary bg-primary/10 shadow-lg ring-2 ring-primary/20"
-                      : "border-border hover:border-primary/50 hover:bg-muted/50"
-                  }`}
-                >
-                  <div className="flex items-center space-x-4">
-                    <div
-                      className={`w-8 h-8 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-all ${
-                        selectedAnswers[currentQuestion.id] === index
-                          ? "border-primary bg-primary text-primary-foreground scale-110"
-                          : "border-muted-foreground"
-                      }`}
-                    >
-                      {selectedAnswers[currentQuestion.id] === index ? (
-                        <CheckCircle2 className="h-5 w-5" />
-                      ) : (
-                        <span className="text-sm font-bold">{String.fromCharCode(65 + index)}</span>
-                      )}
+              {currentQuestion.options.map((option, index) => {
+                const letter = ["A", "B", "C", "D"][index]
+                const isSelected = selectedAnswers[currentQuestionIndex] === letter
+                return (
+                  <button
+                    key={index}
+                    onClick={() => handleAnswerSelect(letter)}
+                    className={`w-full p-5 text-left rounded-xl border-2 transition-all duration-200 hover:scale-[1.02] ${
+                      isSelected
+                        ? "border-primary bg-primary/10 shadow-lg ring-2 ring-primary/20"
+                        : "border-border hover:border-primary/50 hover:bg-muted/50"
+                    }`}
+                  >
+                    <div className="flex items-center space-x-4">
+                      <div
+                        className={`w-8 h-8 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-all ${
+                          isSelected
+                            ? "border-primary bg-primary text-primary-foreground scale-110"
+                            : "border-muted-foreground"
+                        }`}
+                      >
+                        {isSelected
+                          ? <CheckCircle2 className="h-5 w-5" />
+                          : <span className="text-sm font-bold">{letter}</span>
+                        }
+                      </div>
+                      <span className="text-base font-medium flex-1">{option}</span>
                     </div>
-                    <span className="text-base font-medium flex-1">{option}</span>
-                  </div>
-                </button>
-              ))}
+                  </button>
+                )
+              })}
             </div>
           </CardContent>
         </Card>
@@ -415,36 +414,34 @@ export default function QuizPage() {
               variant="outline"
               onClick={goToPreviousQuestion}
               disabled={currentQuestionIndex === 0}
-              className="flex items-center space-x-2"
               size="lg"
             >
-              <ArrowLeft className="h-4 w-4" />
-              <span>Previous</span>
+              <ArrowLeft className="h-4 w-4 mr-1" />
+              Previous
             </Button>
 
-            {currentQuestionIndex < quizData.totalQuestions - 1 ? (
-              <Button onClick={goToNextQuestion} className="flex items-center space-x-2" size="lg">
-                <span>Next</span>
-                <ArrowRight className="h-4 w-4" />
+            {currentQuestionIndex < quizState.totalQuestions - 1 ? (
+              <Button onClick={goToNextQuestion} size="lg">
+                Next
+                <ArrowRight className="h-4 w-4 ml-1" />
               </Button>
             ) : (
               <Button
                 onClick={handleEarlySubmit}
-                className="flex items-center space-x-2 bg-green-600 hover:bg-green-700"
+                className="bg-green-600 hover:bg-green-700"
                 size="lg"
               >
-                <Send className="h-4 w-4" />
-                <span>Submit Test</span>
+                <Send className="h-4 w-4 mr-1" />
+                Submit Test
               </Button>
             )}
           </div>
 
-          <Button 
-            variant="destructive" 
-            onClick={handleEarlySubmit} 
+          <Button
+            variant="destructive"
+            onClick={handleEarlySubmit}
             disabled={isSubmitting}
             size="lg"
-            className="shadow-lg"
           >
             {isSubmitting ? (
               <>
@@ -467,10 +464,10 @@ export default function QuizPage() {
               <CardHeader>
                 <CardTitle className="text-xl">Submit Test Early?</CardTitle>
                 <CardDescription className="text-base">
-                  You have answered {answeredCount} out of {quizData.totalQuestions} questions.
-                  {answeredCount < quizData.totalQuestions && (
+                  You have answered {answeredCount} out of {quizState.totalQuestions} questions.
+                  {answeredCount < quizState.totalQuestions && (
                     <span className="block mt-2 text-amber-600 font-medium">
-                      ⚠️ {quizData.totalQuestions - answeredCount} questions will be marked as unanswered.
+                      ⚠️ {quizState.totalQuestions - answeredCount} questions will be marked as unanswered.
                     </span>
                   )}
                 </CardDescription>

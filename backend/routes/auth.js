@@ -1,347 +1,144 @@
 import express from "express"
 import jwt from "jsonwebtoken"
-import User from "../models/User.js";
-import auth from "../middleware/auth.js";
+import User from "../models/User.js"
+import auth from "../middleware/auth.js"
 
 const router = express.Router()
 
-// Register new user
-router.post("/register", async (req, res) => {
+const generateToken = (userId) =>
+  jwt.sign(
+    { userId },
+    process.env.JWT_SECRET || "fallback-secret-key-change-in-production",
+    { expiresIn: "30d" }
+  )
+
+// ─── POST /api/auth/signup ────────────────────────────────────────────────────
+router.post("/signup", async (req, res) => {
   try {
-    const { username, email, password, firstName, lastName } = req.body
+    const { name, email, password } = req.body
 
-    // Validation
-    if (!username || !email || !password) {
-      return res.status(400).json({
-        success: false,
-        error: "Username, email, and password are required",
-      })
+    if (!name || !email || !password) {
+      return res.status(400).json({ success: false, error: "Name, email, and password are required" })
     }
-
+    if (name.trim().length < 2) {
+      return res.status(400).json({ success: false, error: "Name must be at least 2 characters" })
+    }
     if (password.length < 6) {
-      return res.status(400).json({
-        success: false,
-        error: "Password must be at least 6 characters long",
-      })
+      return res.status(400).json({ success: false, error: "Password must be at least 6 characters" })
+    }
+    if (!/^\S+@\S+\.\S+$/.test(email)) {
+      return res.status(400).json({ success: false, error: "Please provide a valid email address" })
     }
 
-    if (username.length < 3) {
-      return res.status(400).json({
-        success: false,
-        error: "Username must be at least 3 characters long",
-      })
-    }
-
-    // Validate email format
-    const emailRegex = /^\S+@\S+\.\S+$/
-    if (!emailRegex.test(email)) {
-      return res.status(400).json({
-        success: false,
-        error: "Please provide a valid email address",
-      })
-    }
-
-    // Check if user already exists
-    const existingUser = await User.findOne({
-      $or: [{ email: email.toLowerCase() }, { username }],
-    })
-
+    const existingUser = await User.findOne({ email: email.toLowerCase() })
     if (existingUser) {
-      if (existingUser.email === email.toLowerCase()) {
-        return res.status(400).json({
-          success: false,
-          error: "An account with this email already exists",
-        })
-      }
-      return res.status(400).json({
-        success: false,
-        error: "Username is already taken",
-      })
+      return res.status(409).json({ success: false, error: "An account with this email already exists" })
     }
 
-    // Create new user
     const user = new User({
-      username,
+      name: name.trim(),
       email: email.toLowerCase(),
-      password,
-      profile: {
-        firstName: firstName || "",
-        lastName: lastName || "",
-      },
+      passwordHash: password, // pre-save hook will hash this
     })
 
     await user.save()
-
-    // Generate JWT token
-    const token = jwt.sign(
-      { userId: user._id },
-      process.env.JWT_SECRET || "fallback-secret-key-change-in-production",
-      { expiresIn: "30d" }
-    )
+    const token = generateToken(user._id)
 
     res.status(201).json({
       success: true,
-      message: "User registered successfully",
+      message: "Account created successfully",
       token,
       user: user.toJSON(),
     })
   } catch (error) {
-    console.error("Registration error:", error)
-    res.status(500).json({
-      success: false,
-      error: "Failed to register user. Please try again.",
-    })
+    console.error("Signup error:", error)
+    res.status(500).json({ success: false, error: "Failed to create account. Please try again." })
   }
 })
 
-// Login user
+// ─── POST /api/auth/login ─────────────────────────────────────────────────────
 router.post("/login", async (req, res) => {
   try {
     const { email, password } = req.body
 
-    // Validation
     if (!email || !password) {
-      return res.status(400).json({
-        success: false,
-        error: "Email and password are required",
-      })
+      return res.status(400).json({ success: false, error: "Email and password are required" })
     }
 
-    // Find user by email and include password field
-    const user = await User.findOne({ email: email.toLowerCase() }).select("+password")
-    
+    // ✅ MUST use .select("+passwordHash") since field has select: false
+    const user = await User.findOne({ email: email.toLowerCase() }).select("+passwordHash")
+
     if (!user) {
-      return res.status(401).json({
-        success: false,
-        error: "Invalid email or password",
-      })
+      return res.status(401).json({ success: false, error: "Invalid email or password" })
     }
 
-    // Check if account is active
-    if (!user.isActive) {
-      return res.status(401).json({
-        success: false,
-        error: "Your account has been deactivated. Please contact support.",
-      })
+    // ✅ comparePassword uses this.passwordHash internally
+    const isValid = await user.comparePassword(password)
+    if (!isValid) {
+      return res.status(401).json({ success: false, error: "Invalid email or password" })
     }
 
-    // Check password
-    const isPasswordValid = await user.comparePassword(password)
-    if (!isPasswordValid) {
-      return res.status(401).json({
-        success: false,
-        error: "Invalid email or password",
-      })
-    }
+    // ✅ Use updateOne to avoid triggering pre-save bcrypt hook
+    await User.updateOne({ _id: user._id }, { lastLogin: new Date() })
 
-    // Update last login
-    user.lastLogin = new Date()
-    await user.save()
-
-    // Generate JWT token
-    const token = jwt.sign(
-      { userId: user._id },
-      process.env.JWT_SECRET || "fallback-secret-key-change-in-production",
-      { expiresIn: "30d" }
-    )
-
-    // Remove password from response
-    const userResponse = user.toJSON()
+    const token = generateToken(user._id)
 
     res.json({
       success: true,
       message: "Login successful",
       token,
-      user: userResponse,
+      user: user.toJSON(),
     })
   } catch (error) {
     console.error("Login error:", error)
-    res.status(500).json({
-      success: false,
-      error: "Failed to login. Please try again.",
-    })
+    res.status(500).json({ success: false, error: "Failed to login. Please try again." })
   }
 })
 
-// Get current user profile
-router.get("/profile", auth, async (req, res) => {
+// ─── GET /api/auth/me (protected) ────────────────────────────────────────────
+router.get("/me", auth, async (req, res) => {
   try {
     const user = await User.findById(req.userId)
-
     if (!user) {
-      return res.status(404).json({
-        success: false,
-        error: "User not found",
-      })
+      return res.status(404).json({ success: false, error: "User not found" })
     }
-
-    res.json({
-      success: true,
-      user: user.toJSON(),
-    })
+    res.json({ success: true, user: user.toJSON() })
   } catch (error) {
-    console.error("Profile fetch error:", error)
-    res.status(500).json({
-      success: false,
-      error: "Failed to fetch profile",
-    })
+    console.error("Get me error:", error)
+    res.status(500).json({ success: false, error: "Failed to fetch user" })
   }
 })
 
-// Update user profile
-router.put("/profile", auth, async (req, res) => {
-  try {
-    const { firstName, lastName, dateOfBirth, education, occupation, targetCompany, preferredDifficulty } = req.body
-
-    const user = await User.findById(req.userId)
-    if (!user) {
-      return res.status(404).json({
-        success: false,
-        error: "User not found",
-      })
-    }
-
-    // Update profile fields
-    if (firstName !== undefined) user.profile.firstName = firstName
-    if (lastName !== undefined) user.profile.lastName = lastName
-    if (dateOfBirth !== undefined) user.profile.dateOfBirth = dateOfBirth
-    if (education !== undefined) user.profile.education = education
-    if (occupation !== undefined) user.profile.occupation = occupation
-    if (targetCompany !== undefined) user.profile.targetCompany = targetCompany
-    if (preferredDifficulty !== undefined) user.preferences.preferredDifficulty = preferredDifficulty
-
-    await user.save()
-
-    res.json({
-      success: true,
-      message: "Profile updated successfully",
-      user: user.toJSON(),
-    })
-  } catch (error) {
-    console.error("Profile update error:", error)
-    res.status(500).json({
-      success: false,
-      error: "Failed to update profile",
-    })
-  }
-})
-
-// Save assessment result
-router.post("/save-assessment", auth, async (req, res) => {
-  try {
-    const { assessmentId, company, difficulty, score, correctAnswers, totalQuestions, timeSpent, badge, topicBreakdown } = req.body
-
-    const user = await User.findById(req.userId)
-    if (!user) {
-      return res.status(404).json({
-        success: false,
-        error: "User not found",
-      })
-    }
-
-    // Add assessment using the model method
-    await user.addAssessment({
-      assessmentId: assessmentId || Date.now().toString(),
-      company: company || "general",
-      difficulty,
-      score,
-      correctAnswers,
-      totalQuestions,
-      timeSpent,
-      badge,
-      topicBreakdown,
-    })
-
-    res.json({
-      success: true,
-      message: "Assessment saved successfully",
-      user: user.toJSON(),
-    })
-  } catch (error) {
-    console.error("Save assessment error:", error)
-    res.status(500).json({
-      success: false,
-      error: "Failed to save assessment",
-    })
-  }
-})
-
-// Change password
+// ─── PUT /api/auth/change-password (protected) ───────────────────────────────
 router.put("/change-password", auth, async (req, res) => {
   try {
     const { currentPassword, newPassword } = req.body
 
     if (!currentPassword || !newPassword) {
-      return res.status(400).json({
-        success: false,
-        error: "Current password and new password are required",
-      })
+      return res.status(400).json({ success: false, error: "Both passwords are required" })
     }
-
     if (newPassword.length < 6) {
-      return res.status(400).json({
-        success: false,
-        error: "New password must be at least 6 characters long",
-      })
+      return res.status(400).json({ success: false, error: "New password must be at least 6 characters" })
     }
 
-    const user = await User.findById(req.userId).select("+password")
+    const user = await User.findById(req.userId).select("+passwordHash")
     if (!user) {
-      return res.status(404).json({
-        success: false,
-        error: "User not found",
-      })
+      return res.status(404).json({ success: false, error: "User not found" })
     }
 
-    // Verify current password
-    const isCurrentPasswordValid = await user.comparePassword(currentPassword)
-    if (!isCurrentPasswordValid) {
-      return res.status(401).json({
-        success: false,
-        error: "Current password is incorrect",
-      })
+    const isValid = await user.comparePassword(currentPassword)
+    if (!isValid) {
+      return res.status(401).json({ success: false, error: "Current password is incorrect" })
     }
 
-    // Update password
-    user.password = newPassword
+    // Setting passwordHash triggers pre-save hook to re-hash — this is intentional
+    user.passwordHash = newPassword
     await user.save()
 
-    res.json({
-      success: true,
-      message: "Password changed successfully",
-    })
+    res.json({ success: true, message: "Password changed successfully" })
   } catch (error) {
-    console.error("Password change error:", error)
-    res.status(500).json({
-      success: false,
-      error: "Failed to change password",
-    })
-  }
-})
-
-// Get user statistics
-router.get("/statistics", auth, async (req, res) => {
-  try {
-    const user = await User.findById(req.userId)
-    
-    if (!user) {
-      return res.status(404).json({
-        success: false,
-        error: "User not found",
-      })
-    }
-
-    res.json({
-      success: true,
-      statistics: user.statistics,
-      recentAssessments: user.assessmentHistory.slice(0, 10),
-    })
-  } catch (error) {
-    console.error("Statistics fetch error:", error)
-    res.status(500).json({
-      success: false,
-      error: "Failed to fetch statistics",
-    })
+    console.error("Change password error:", error)
+    res.status(500).json({ success: false, error: "Failed to change password" })
   }
 })
 
