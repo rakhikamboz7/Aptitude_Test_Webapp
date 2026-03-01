@@ -40,7 +40,7 @@ import {
   ExternalLink,
   Layers
 } from "lucide-react"
-
+let initialLoadDone = false;
 export default function HomePage() {
   const navigate = useNavigate()
   const { user } = useAuth() // Removed logout, it's handled in Navigation now!
@@ -49,8 +49,8 @@ export default function HomePage() {
   const [customCompany, setCustomCompany] = useState("")
   const [showCustomInput, setShowCustomInput] = useState(false)
   const [searchQuery, setSearchQuery] = useState("")
-  const [isLoading, setIsLoading] = useState(true)
-  const [loadingProgress, setLoadingProgress] = useState(0)
+  const [isLoading, setIsLoading] = useState(!initialLoadDone)
+  const [loadingProgress, setLoadingProgress] = useState(initialLoadDone ? 100 : 0)
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 })
   const [selectedQOTDOption, setSelectedQOTDOption] = useState(null)
   const canvasRef = useRef(null)
@@ -97,11 +97,17 @@ export default function HomePage() {
   };
 
   useEffect(() => {
+    // If it already loaded this session, skip the timer completely
+    if (initialLoadDone) return;
+
     const timer = setInterval(() => {
       setLoadingProgress((prev) => {
         if (prev >= 100) {
           clearInterval(timer)
-          setTimeout(() => setIsLoading(false), 500)
+          setTimeout(() => {
+            setIsLoading(false)
+            initialLoadDone = true // Mark it as done so it doesn't happen again!
+          }, 500)
           return 100
         }
         return prev + 2
