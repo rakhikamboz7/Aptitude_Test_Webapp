@@ -28,7 +28,7 @@ export default function QuizPage() {
   const [isLoading, setIsLoading]                    = useState(true)
   const [error, setError]                            = useState(null)
   const [isSubmitting, setIsSubmitting]              = useState(false)
-  const [startTime, setStartTime]                    = useState(0)
+  const startTimeRef                                 = useRef(0) // useRef avoids ESLint unused-var + no re-render needed
   const [showSubmitConfirm, setShowSubmitConfirm]    = useState(false)
   const [autoSaveStatus, setAutoSaveStatus]          = useState("")
   const [criticalTimeWarning, setCriticalTimeWarning] = useState(false)
@@ -103,7 +103,7 @@ export default function QuizPage() {
         })
 
         setTimeRemaining(data.timeLimit)        // ✅ was data.data.timeLimit (crash)
-        setStartTime(Date.now())
+        startTimeRef.current = Date.now()
 
       } catch (err) {
         console.error("Quiz loading error:", err)
