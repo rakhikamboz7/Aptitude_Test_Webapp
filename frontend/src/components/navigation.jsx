@@ -162,9 +162,9 @@ export const Navigation = () => {
           <div className="flex items-center space-x-3">
             {isAuthenticated && user ? (
               <>
-                <div className="hidden sm:block text-right">
-                  <p className="text-sm font-medium text-slate-900">
-                    {user.profile?.firstName || user.username}
+                <div className="text-right hidden sm:block">
+                  <p className="text-sm font-medium text-foreground">
+                    {user.profile?.firstName || user.name}
                   </p>
                   <div className="flex items-center justify-end gap-1 text-xs text-slate-500">
                     <Trophy className="h-3 w-3 text-amber-500" />

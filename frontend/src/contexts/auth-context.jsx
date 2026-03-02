@@ -6,28 +6,26 @@ const AuthContext = createContext(null)
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000"
 
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null)
-  const [token, setToken] = useState(localStorage.getItem("token"))
+  const [user, setUser]       = useState(null)
+  const [token, setToken]     = useState(localStorage.getItem("token"))
   const [loading, setLoading] = useState(true)
   const navigate = useNavigate()
 
-  // Fetch user profile
+  // ─── Fetch current user ───────────────────────────────────────────────────
   const fetchUserProfile = async (authToken) => {
     try {
-      const response = await fetch(`${API_URL}/api/auth/profile`, {
+      const response = await fetch(`${API_URL}/api/auth/me`, {
         headers: {
           Authorization: `Bearer ${authToken}`,
           "Content-Type": "application/json",
         },
       })
-
       const data = await response.json()
-
       if (data.success) {
         setUser(data.user)
         return data.user
       } else {
-        throw new Error(data.error || "Failed to fetch profile")
+        throw new Error(data.error || "Failed to fetch user")
       }
     } catch (error) {
       console.error("Profile fetch error:", error)
@@ -36,23 +34,18 @@ export const AuthProvider = ({ children }) => {
     }
   }
 
-  // Login function
+  // ─── Login ────────────────────────────────────────────────────────────────
   const login = async (email, password) => {
     try {
       const response = await fetch(`${API_URL}/api/auth/login`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
       })
-
       const data = await response.json()
-
       if (data.success) {
-        const authToken = data.token
-        localStorage.setItem("token", authToken)
-        setToken(authToken)
+        localStorage.setItem("token", data.token)
+        setToken(data.token)
         setUser(data.user)
         navigate("/")
         return { success: true }
@@ -65,23 +58,23 @@ export const AuthProvider = ({ children }) => {
     }
   }
 
-  // Register function
+  // ─── Signup ───────────────────────────────────────────────────────────────
+  // userData = { name, email, password }
   const register = async (userData) => {
     try {
-      const response = await fetch(`${API_URL}/api/auth/register`, {
+      const response = await fetch(`${API_URL}/api/auth/signup`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(userData),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name:     userData.name,
+          email:    userData.email,
+          password: userData.password,
+        }),
       })
-
       const data = await response.json()
-
       if (data.success) {
-        const authToken = data.token
-        localStorage.setItem("token", authToken)
-        setToken(authToken)
+        localStorage.setItem("token", data.token)
+        setToken(data.token)
         setUser(data.user)
         navigate("/")
         return { success: true }
@@ -94,7 +87,7 @@ export const AuthProvider = ({ children }) => {
     }
   }
 
-  // Logout function
+  // ─── Logout ───────────────────────────────────────────────────────────────
   const logout = () => {
     localStorage.removeItem("token")
     setToken(null)
@@ -102,59 +95,76 @@ export const AuthProvider = ({ children }) => {
     navigate("/auth")
   }
 
-  // Update profile function
-  const updateProfile = async (profileData) => {
+  // ─── Change password ──────────────────────────────────────────────────────
+  const changePassword = async (currentPassword, newPassword) => {
     try {
-      const response = await fetch(`${API_URL}/api/auth/profile`, {
+      const response = await fetch(`${API_URL}/api/auth/change-password`, {
         method: "PUT",
         headers: {
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(profileData),
+        body: JSON.stringify({ currentPassword, newPassword }),
       })
-
       const data = await response.json()
-
       if (data.success) {
-        setUser(data.user)
         return { success: true }
       } else {
-        return { success: false, error: data.error || "Update failed" }
+        return { success: false, error: data.error || "Password change failed" }
       }
     } catch (error) {
-      console.error("Profile update error:", error)
+      console.error("Change password error:", error)
       return { success: false, error: "Network error. Please try again." }
     }
   }
 
-  // Save assessment result
-  const saveAssessment = async (assessmentData) => {
+  // ─── Start assessment ─────────────────────────────────────────────────────
+  const startAssessment = async ({ companyName, difficulty }) => {
     try {
-      const response = await fetch(`${API_URL}/api/auth/save-assessment`, {
+      const response = await fetch(`${API_URL}/api/assessments/start`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(assessmentData),
+        body: JSON.stringify({ companyName, difficulty }),
       })
-
       const data = await response.json()
-
       if (data.success) {
-        setUser(data.user)
-        return { success: true }
+        return { success: true, data }
       } else {
-        return { success: false, error: data.error }
+        return { success: false, error: data.error || "Failed to start assessment" }
       }
     } catch (error) {
-      console.error("Save assessment error:", error)
-      return { success: false, error: "Failed to save assessment" }
+      console.error("Start assessment error:", error)
+      return { success: false, error: "Network error. Please try again." }
     }
   }
 
-  // Check authentication on mount
+  // ─── Submit assessment ────────────────────────────────────────────────────
+  const submitAssessment = async (assessmentId, answers) => {
+    try {
+      const response = await fetch(`${API_URL}/api/assessments/${assessmentId}/submit`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ answers }),
+      })
+      const data = await response.json()
+      if (data.success) {
+        return { success: true, result: data.result }
+      } else {
+        return { success: false, error: data.error || "Failed to submit assessment" }
+      }
+    } catch (error) {
+      console.error("Submit assessment error:", error)
+      return { success: false, error: "Network error. Please try again." }
+    }
+  }
+
+  // ─── Check auth on app mount ──────────────────────────────────────────────
   useEffect(() => {
     const initAuth = async () => {
       const storedToken = localStorage.getItem("token")
@@ -164,7 +174,6 @@ export const AuthProvider = ({ children }) => {
       }
       setLoading(false)
     }
-
     initAuth()
   }, [])
 
@@ -175,8 +184,9 @@ export const AuthProvider = ({ children }) => {
     login,
     register,
     logout,
-    updateProfile,
-    saveAssessment,
+    changePassword,
+    startAssessment,
+    submitAssessment,
     isAuthenticated: !!token,
   }
 
@@ -185,8 +195,6 @@ export const AuthProvider = ({ children }) => {
 
 export const useAuth = () => {
   const context = useContext(AuthContext)
-  if (!context) {
-    throw new Error("useAuth must be used within an AuthProvider")
-  }
+  if (!context) throw new Error("useAuth must be used within an AuthProvider")
   return context
 }

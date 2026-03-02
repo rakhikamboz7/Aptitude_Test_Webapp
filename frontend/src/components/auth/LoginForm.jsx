@@ -6,26 +6,20 @@ import { Alert, AlertDescription } from "../ui/alert"
 import { Mail, Lock, Loader2, Sparkles } from "lucide-react"
 
 export const LoginForm = ({ onToggleMode }) => {
-  const [formData, setFormData] = useState({
-    email: "",
-    password: "",
-  })
-  const [error, setError] = useState("")
-  const [loading, setLoading] = useState(false)
+  const [formData, setFormData] = useState({ email: "", password: "" })
+  const [error, setError]       = useState("")
+  const [loading, setLoading]   = useState(false)
 
   const { login } = useAuth()
 
   const handleChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value,
-    })
+    setFormData({ ...formData, [e.target.name]: e.target.value })
+    if (error) setError("")
   }
 
   const handleSubmit = async (e) => {
     e.preventDefault()
     setError("")
-    
     if (!formData.email || !formData.password) {
       setError("Please fill in all fields")
       return
@@ -33,10 +27,7 @@ export const LoginForm = ({ onToggleMode }) => {
 
     setLoading(true)
     const result = await login(formData.email, formData.password)
-
-    if (!result.success) {
-      setError(result.error)
-    }
+    if (!result.success) setError(result.error)
     setLoading(false)
   }
 
@@ -44,12 +35,10 @@ export const LoginForm = ({ onToggleMode }) => {
     <Card className="w-full max-w-md mx-auto bg-white/80 backdrop-blur-xl border border-slate-200 shadow-xl shadow-slate-200/50 relative overflow-hidden">
       {/* Decorative top gradient line */}
       <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-blue-600 to-sky-500" />
-      
       <CardHeader className="text-center space-y-2 pb-6 pt-8">
         <div className="mx-auto w-12 h-12 bg-blue-50 border border-blue-100 rounded-2xl flex items-center justify-center mb-2 shadow-sm">
           <Sparkles className="h-6 w-6 text-blue-600" />
         </div>
-        {/* Themed Gradient Heading */}
         <CardTitle className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-sky-500">
           Welcome Back
         </CardTitle>
@@ -57,7 +46,6 @@ export const LoginForm = ({ onToggleMode }) => {
           Sign in to your account to continue your learning journey
         </CardDescription>
       </CardHeader>
-      
       <CardContent className="px-8 pb-8">
         <form onSubmit={handleSubmit} className="space-y-5">
           {error && (
@@ -102,9 +90,9 @@ export const LoginForm = ({ onToggleMode }) => {
             />
           </div>
 
-          <Button 
-            type="submit" 
-            disabled={loading} 
+          <Button
+            type="submit"
+            disabled={loading}
             className="w-full py-6 text-base font-bold bg-gradient-to-r from-blue-600 to-sky-600 hover:from-blue-500 hover:to-sky-500 text-white rounded-xl shadow-lg shadow-blue-500/20 transition-all mt-4"
           >
             {loading ? (
@@ -120,7 +108,7 @@ export const LoginForm = ({ onToggleMode }) => {
 
         <div className="mt-8 text-center border-t border-slate-100 pt-6">
           <p className="text-sm font-medium text-slate-500">
-            Don't have an account?{" "}
+            Don&apos;t have an account?{" "}
             <button
               type="button"
               onClick={onToggleMode}

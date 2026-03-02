@@ -4,821 +4,653 @@
 import React, { useState, useEffect, useRef } from "react"
 import { useNavigate } from "react-router-dom"
 import { Button } from "../components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "../components/ui/card"
 import { Badge } from "../components/ui/badge"
-import { Navigation } from "../components/navigation" 
 import {
-  TrendingUp,
-  TrendingDown,
-  Clock,
-  BookOpen,
-  Calendar,
-  BarChart3,
-  Trophy,
-  Minus,
-  Target,
-  Brain,
-  Sparkles,
-  Award,
-  Building2,
-  Zap,
-  ArrowRight,
-  Activity,
-  CircleDot,
-  ChevronRight,
+  TrendingUp, TrendingDown, Clock, BookOpen, BarChart3,
+  Trophy, Target, Brain, Sparkles, Award, Building2, Zap,
+  ArrowRight, Activity, Flame, LogOut, User, CheckCircle2,
+  Lock, Play, MessageSquare, ChevronRight, Bell, Settings,
+  FileText, Map, LayoutDashboard, Minus,
 } from "lucide-react"
 import { useAuth } from "../contexts/auth-context"
 
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000"
+
 export default function ProgressPage() {
   const navigate = useNavigate()
-  const { user } = useAuth() // Removed logout, handled by Navigation
+  const { user, logout } = useAuth()
+
   const [progressData, setProgressData] = useState([])
-  const [stats, setStats] = useState(null)
-  const [loading, setLoading] = useState(true)
-  const [badgeStats, setBadgeStats] = useState(null)
-  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 })
-  const chartCanvasRef = useRef(null)
-  const gaugeCanvasRef = useRef(null)
+  const [stats, setStats]               = useState(null)
+  const [loading, setLoading]           = useState(true)
+  const [badgeStats, setBadgeStats]     = useState(null)
+  const [activeNav, setActiveNav]       = useState("dashboard")
+  const chartRef                        = useRef(null)
 
+  // ─── Data loading ──────────────────────────────────────────────────────────
   useEffect(() => {
-    const loadProgressData = () => {
+    const load = async () => {
       try {
-        const history = JSON.parse(localStorage.getItem("progressHistory") || "[]")
-        setProgressData(history)
-
-        if (history.length > 0) {
-          // Calculate statistics
-          const totalTests = history.length
-          const averageScore = Math.round(history.reduce((sum, test) => sum + test.score, 0) / totalTests)
-          const totalTimeSpent = history.reduce((sum, test) => sum + test.timeSpent, 0)
-
-          // Badge statistics
-          const badgeCounts = {
-            beginner: 0,
-            intermediate: 0,
-            advanced: 0,
+        setLoading(true)
+        const token = localStorage.getItem("token")
+        if (token) {
+          const res  = await fetch(`${API_URL}/api/dashboard/summary`, {
+            headers: { Authorization: `Bearer ${token}` },
+          })
+          const data = await res.json()
+          if (data.success) {
+            const s = data.summary
+            setProgressData(s.progressHistory || [])
+            setBadgeStats(s.badges)
+            setStats({
+              totalTests:     s.totalAssessments,
+              averageScore:   s.averageScore,
+              bestScore:      s.bestScore,
+              bestDifficulty: s.bestDifficulty,
+              totalTimeSpent: s.totalTimeSpent,
+              trend:          s.trend,
+              topicStats:     s.topicStats   || {},
+              companyStats:   s.companyStats || {},
+            })
+            return
           }
-          history.forEach((test) => {
-            if (test.badge?.level) {
-              badgeCounts[test.badge.level]++
-            }
-          })
-
-          setBadgeStats(badgeCounts)
-
-          // Calculate trend
-          let trend = "stable"
-          if (history.length >= 3) {
-            const recent = history.slice(0, 3)
-            const older = history.slice(-3)
-            const recentAvg = recent.reduce((sum, test) => sum + test.score, 0) / recent.length
-            const olderAvg = older.reduce((sum, test) => sum + test.score, 0) / older.length
-
-            if (recentAvg > olderAvg + 5) trend = "improving"
-            else if (recentAvg < olderAvg - 5) trend = "declining"
-          }
-
-          // Find best performance
-          const bestTest = history.reduce((best, current) => (current.score > best.score ? current : best))
-
-          // Company analysis
-          const companyStats = {}
-          history.forEach((test) => {
-            const company = test.company || "general"
-            if (!companyStats[company]) {
-              companyStats[company] = { tests: 0, totalScore: 0, avgScore: 0 }
-            }
-            companyStats[company].tests++
-            companyStats[company].totalScore += test.score
-          })
-
-          Object.keys(companyStats).forEach((company) => {
-            companyStats[company].avgScore = Math.round(
-              companyStats[company].totalScore / companyStats[company].tests
-            )
-          })
-
-          // Topic analysis
-          const topicStats = {}
-          history.forEach((test) => {
-            if (test.breakdown?.byTopic) {
-              Object.entries(test.breakdown.byTopic).forEach(([topic, data]) => {
-                if (!topicStats[topic]) {
-                  topicStats[topic] = { correct: 0, total: 0, tests: 0 }
-                }
-                topicStats[topic].correct += data.correct
-                topicStats[topic].total += data.total
-                topicStats[topic].tests += 1
-              })
-            }
-          })
-
-          // Calculate accuracy for each topic
-          Object.keys(topicStats).forEach((topic) => {
-            topicStats[topic].accuracy = Math.round((topicStats[topic].correct / topicStats[topic].total) * 100)
-          })
-
-          setStats({
-            totalTests,
-            averageScore,
-            totalTimeSpent,
-            trend,
-            bestScore: bestTest.score,
-            bestDifficulty: bestTest.difficulty,
-            topicStats,
-            companyStats,
-          })
         }
-      } catch (error) {
-        console.error("Error loading progress data:", error)
+        // localStorage fallback
+        const local = JSON.parse(localStorage.getItem("progressHistory") || "[]")
+        setProgressData(local)
+        if (local.length > 0) {
+          const avg  = Math.round(local.reduce((s, t) => s + t.score, 0) / local.length)
+          const best = local.reduce((b, c) => (c.score > b.score ? c : b))
+          const bdg  = { beginner: 0, intermediate: 0, advanced: 0 }
+          local.forEach((t) => { if (t.badge?.level) bdg[t.badge.level]++ })
+          setBadgeStats(bdg)
+          setStats({ totalTests: local.length, averageScore: avg, bestScore: best.score, bestDifficulty: best.difficulty, totalTimeSpent: local.reduce((s, t) => s + (t.timeSpent || 0), 0), trend: "stable", topicStats: {}, companyStats: {} })
+        }
+      } catch (e) {
+        console.error(e)
       } finally {
         setLoading(false)
       }
     }
-
-    loadProgressData()
+    load()
   }, [])
 
-  // Mouse tracking for parallax
+  // ─── Growth line chart ─────────────────────────────────────────────────────
   useEffect(() => {
-    const handleMouseMove = (e) => {
-      setMousePosition({
-        x: (e.clientX / window.innerWidth - 0.5) * 20,
-        y: (e.clientY / window.innerHeight - 0.5) * 20,
-      })
-    }
-
-    window.addEventListener("mousemove", handleMouseMove)
-    return () => window.removeEventListener("mousemove", handleMouseMove)
-  }, [])
-
-  // Draw bar chart
-  useEffect(() => {
-    if (!chartCanvasRef.current || !progressData.length) return
-
-    const canvas = chartCanvasRef.current
-    const ctx = canvas.getContext("2d")
-    const dpr = window.devicePixelRatio || 1
-    
-    canvas.width = canvas.offsetWidth * dpr
+    if (!chartRef.current || progressData.length < 2) return
+    const canvas = chartRef.current
+    const ctx    = canvas.getContext("2d")
+    const dpr    = window.devicePixelRatio || 1
+    canvas.width  = canvas.offsetWidth  * dpr
     canvas.height = canvas.offsetHeight * dpr
     ctx.scale(dpr, dpr)
+    const W = canvas.offsetWidth, H = canvas.offsetHeight
+    const p = { t: 16, r: 16, b: 30, l: 32 }
+    const cW = W - p.l - p.r, cH = H - p.t - p.b
 
-    const width = canvas.offsetWidth
-    const height = canvas.offsetHeight
-    const padding = 40
-    const chartWidth = width - padding * 2
-    const chartHeight = height - padding * 2
+    ctx.clearRect(0, 0, W, H)
 
-    // Clear canvas
-    ctx.clearRect(0, 0, width, height)
+    const pts = progressData.slice(0, 5).reverse()
 
-    // Get last 7 tests
-    const recentTests = progressData.slice(0, 7).reverse()
-    const barWidth = chartWidth / recentTests.length
-    const maxScore = 100
-
-    // Draw bars
-    recentTests.forEach((test, index) => {
-      const barHeight = (test.score / maxScore) * chartHeight
-      const x = padding + index * barWidth + barWidth * 0.15
-      const y = height - padding - barHeight
-      const width = barWidth * 0.7
-
-      // Gradient
-      const gradient = ctx.createLinearGradient(x, y, x, y + barHeight)
-      if (test.score >= 80) {
-        gradient.addColorStop(0, "#10b981")
-        gradient.addColorStop(1, "#14b8a6")
-      } else if (test.score >= 60) {
-        gradient.addColorStop(0, "#3b82f6")
-        gradient.addColorStop(1, "#0ea5e9")
-      } else {
-        gradient.addColorStop(0, "#f59e0b")
-        gradient.addColorStop(1, "#f97316")
-      }
-
-      ctx.fillStyle = gradient
-      ctx.fillRect(x, y, width, barHeight)
-
-      // Score text (Changed to dark for light theme)
-      ctx.fillStyle = "#1e293b" 
-      ctx.font = "bold 12px system-ui"
-      ctx.textAlign = "center"
-      ctx.fillText(`${test.score}%`, x + width / 2, y - 8)
-
-      // Day label
-      ctx.fillStyle = "#64748b"
-      ctx.font = "10px system-ui"
-      const date = new Date(test.date)
-      const dayLabel = date.toLocaleDateString("en-US", { weekday: "short" })
-      ctx.fillText(dayLabel, x + width / 2, height - padding + 20)
+    // y-axis lines
+    ;[25, 50, 75, 100].forEach((v) => {
+      const y = p.t + cH - (v / 100) * cH
+      ctx.strokeStyle = "#1e293b"; ctx.lineWidth = 1
+      ctx.beginPath(); ctx.moveTo(p.l, y); ctx.lineTo(W - p.r, y); ctx.stroke()
+      ctx.fillStyle = "#475569"; ctx.font = "9px system-ui"; ctx.textAlign = "right"
+      ctx.fillText(`${v}`, p.l - 4, y + 3)
     })
 
-    // Draw axes (Light theme)
-    ctx.strokeStyle = "#e2e8f0"
-    ctx.lineWidth = 2
+    const points = pts.map((t, i) => ({
+      x: p.l + (i / Math.max(pts.length - 1, 1)) * cW,
+      y: p.t + cH - (t.score / 100) * cH,
+      score: t.score,
+    }))
+
+    // Fill
+    const grd = ctx.createLinearGradient(0, p.t, 0, H - p.b)
+    grd.addColorStop(0, "rgba(6,182,212,0.22)"); grd.addColorStop(1, "rgba(6,182,212,0)")
     ctx.beginPath()
-    ctx.moveTo(padding, padding)
-    ctx.lineTo(padding, height - padding)
-    ctx.lineTo(width - padding, height - padding)
-    ctx.stroke()
+    ctx.moveTo(points[0].x, H - p.b)
+    points.forEach((pt) => ctx.lineTo(pt.x, pt.y))
+    ctx.lineTo(points[points.length - 1].x, H - p.b)
+    ctx.closePath(); ctx.fillStyle = grd; ctx.fill()
+
+    // Line
+    ctx.beginPath(); ctx.moveTo(points[0].x, points[0].y)
+    points.forEach((pt) => ctx.lineTo(pt.x, pt.y))
+    ctx.strokeStyle = "#06b6d4"; ctx.lineWidth = 2.5; ctx.lineJoin = "round"; ctx.stroke()
+
+    // Dots + labels
+    points.forEach((pt, i) => {
+      ctx.beginPath(); ctx.arc(pt.x, pt.y, 4, 0, Math.PI * 2)
+      ctx.fillStyle = "#06b6d4"; ctx.fill()
+      ctx.strokeStyle = "#0f172a"; ctx.lineWidth = 2; ctx.stroke()
+      ctx.fillStyle = "#94a3b8"; ctx.font = "9px system-ui"; ctx.textAlign = "center"
+      ctx.fillText(`Test ${i + 1}`, pt.x, H - p.b + 16)
+    })
   }, [progressData])
 
-  // Draw gauge chart
-  useEffect(() => {
-    if (!gaugeCanvasRef.current || !stats) return
+  // ─── Helpers ───────────────────────────────────────────────────────────────
+  const fmtDate    = (d) => new Date(d).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
+  const scoreColor = (s) => s >= 80 ? "text-emerald-400" : s >= 60 ? "text-cyan-400" : s >= 40 ? "text-amber-400" : "text-red-400"
+  const barColor   = (s) => s >= 80 ? "from-emerald-500 to-teal-500" : s >= 60 ? "from-cyan-500 to-blue-500" : "from-amber-500 to-orange-500"
+  const scoreLabel = (s) => s >= 80 ? "Exceptional" : s >= 70 ? "Improved" : s >= 60 ? "Steady" : "Needs Work"
+  const labelColor = (l) => l === "Exceptional" ? "text-emerald-400" : l === "Improved" ? "text-cyan-400" : l === "Steady" ? "text-blue-400" : "text-amber-400"
 
-    const canvas = gaugeCanvasRef.current
-    const ctx = canvas.getContext("2d")
-    const dpr = window.devicePixelRatio || 1
-    
-    canvas.width = canvas.offsetWidth * dpr
-    canvas.height = canvas.offsetHeight * dpr
-    ctx.scale(dpr, dpr)
+  const streak = Math.min(progressData.length, 6)
 
-    const width = canvas.offsetWidth
-    const height = canvas.offsetHeight
-    const centerX = width / 2
-    const centerY = height - 20
-    const radius = Math.min(width, height) / 2 - 30
+  // Learning path from topic stats or fallback
+  const topicEntries  = stats?.topicStats ? Object.entries(stats.topicStats).sort(([,a],[,b]) => b.accuracy - a.accuracy) : []
+  const learningItems = topicEntries.length > 0
+    ? topicEntries.slice(0, 4).map(([ topic, data ], i) => ({
+        label:   topic.charAt(0).toUpperCase() + topic.slice(1).replace(/([A-Z])/g, " $1") + " Mastery",
+        detail:  i === 0 ? `Accuracy: ${data.accuracy}%` : i === 1 ? null : `Unlocks after previous`,
+        time:    `${data.total} Qs`,
+        status:  i === 0 ? "completed" : i === 1 ? "active" : "locked",
+        progress: data.accuracy,
+      }))
+    : [
+        { label: "Numerical Reasoning",  detail: "Completed on last session", time: "45 mins", status: "completed", progress: 100 },
+        { label: "Logical Thinking",      detail: null,                         time: "1.2 hrs",  status: "active",    progress: 65  },
+        { label: "Verbal Comprehension",  detail: "Unlocks after Logical",      time: "2 hrs",    status: "locked",    progress: 0   },
+        { label: "Data Interpretation",   detail: "Unlocks after Logical",      time: "30 mins",  status: "locked",    progress: 0   },
+      ]
 
-    ctx.clearRect(0, 0, width, height)
+  // ─── Loading / Empty ───────────────────────────────────────────────────────
+  if (loading) return (
+    <div className="min-h-screen bg-slate-950 flex items-center justify-center">
+      <div className="w-14 h-14 relative">
+        <div className="absolute inset-0 border-4 border-cyan-600/25 rounded-full" />
+        <div className="absolute inset-0 border-4 border-cyan-500 rounded-full border-t-transparent animate-spin" />
+      </div>
+    </div>
+  )
 
-    // Background arc (Light Theme)
-    ctx.beginPath()
-    ctx.arc(centerX, centerY, radius, Math.PI, 2 * Math.PI, false)
-    ctx.strokeStyle = "#e2e8f0"
-    ctx.lineWidth = 20
-    ctx.stroke()
-
-    // Score arc
-    const scoreAngle = Math.PI + (stats.averageScore / 100) * Math.PI
-    const gradient = ctx.createLinearGradient(centerX - radius, centerY, centerX + radius, centerY)
-    
-    if (stats.averageScore >= 80) {
-      gradient.addColorStop(0, "#10b981")
-      gradient.addColorStop(1, "#14b8a6")
-    } else if (stats.averageScore >= 60) {
-      gradient.addColorStop(0, "#3b82f6")
-      gradient.addColorStop(1, "#0ea5e9")
-    } else {
-      gradient.addColorStop(0, "#f59e0b")
-      gradient.addColorStop(1, "#f97316")
-    }
-
-    ctx.beginPath()
-    ctx.arc(centerX, centerY, radius, Math.PI, scoreAngle, false)
-    ctx.strokeStyle = gradient
-    ctx.lineWidth = 20
-    ctx.lineCap = "round"
-    ctx.stroke()
-
-    // Center text (Light Theme)
-    ctx.fillStyle = "#0f172a"
-    ctx.font = "bold 48px system-ui"
-    ctx.textAlign = "center"
-    ctx.textBaseline = "middle"
-    ctx.fillText(`${stats.averageScore}%`, centerX, centerY - 15)
-
-    ctx.fillStyle = "#64748b"
-    ctx.font = "14px system-ui"
-    ctx.fillText("Average Score", centerX, centerY + 20)
-  }, [stats])
-
-  const formatTime = (seconds) => {
-    const hours = Math.floor(seconds / 3600)
-    const minutes = Math.floor((seconds % 3600) / 60)
-    if (hours > 0) {
-      return `${hours}h ${minutes}m`
-    }
-    return `${minutes}m`
-  }
-
-  const formatDate = (dateString) => {
-    return new Date(dateString).toLocaleDateString("en-US", {
-      month: "short",
-      day: "numeric",
-      year: "numeric",
-    })
-  }
-
-  const getTrendIcon = (trend) => {
-    switch (trend) {
-      case "improving":
-        return <TrendingUp className="h-5 w-5 text-emerald-500" />
-      case "declining":
-        return <TrendingDown className="h-5 w-5 text-red-500" />
-      default:
-        return <Minus className="h-5 w-5 text-slate-400" />
-    }
-  }
-
-  const getTrendColor = (trend) => {
-    switch (trend) {
-      case "improving":
-        return "text-emerald-600"
-      case "declining":
-        return "text-red-600"
-      default:
-        return "text-slate-500"
-    }
-  }
-
-  const getScoreColor = (score) => {
-    if (score >= 80) return "text-emerald-600"
-    if (score >= 60) return "text-blue-600"
-    if (score >= 40) return "text-amber-500"
-    return "text-red-500"
-  }
-
-  const getBadgeIcon = (level) => {
-    const badges = {
-      beginner: "🥉",
-      intermediate: "🥈",
-      advanced: "🥇",
-    }
-    return badges[level] || "🏅"
-  }
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-16 h-16 mx-auto mb-4 relative">
-            <div className="absolute inset-0 border-4 border-blue-200 rounded-full"></div>
-            <div className="absolute inset-0 border-4 border-blue-600 rounded-full border-t-transparent animate-spin"></div>
+  if (!progressData.length) return (
+    <div className="min-h-screen bg-slate-950 flex items-center justify-center px-4">
+      <Card className="max-w-md text-center bg-slate-900/60 border-slate-800/50 shadow-2xl">
+        <CardHeader>
+          <div className="p-5 bg-cyan-500/10 rounded-full w-fit mx-auto mb-3 border border-cyan-500/20">
+            <BarChart3 className="h-12 w-12 text-cyan-400" />
           </div>
-          <p className="text-slate-600 text-lg font-medium">Loading analytics...</p>
-        </div>
-      </div>
-    )
-  }
+          <CardTitle className="text-2xl text-white">Start Your Journey</CardTitle>
+          <CardDescription className="text-slate-400 mt-1">Complete your first assessment to unlock analytics</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Button onClick={() => navigate("/")} className="w-full bg-gradient-to-r from-cyan-500 to-blue-600 text-white font-semibold" size="lg">
+            <Brain className="h-4 w-4 mr-2" /> Take First Assessment
+          </Button>
+        </CardContent>
+      </Card>
+    </div>
+  )
 
-  if (progressData.length === 0) {
-    return (
-      <div className="min-h-screen bg-slate-50 relative overflow-hidden">
-        {/* Light Theme Orbs */}
-        <div className="fixed inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute -top-40 -right-40 w-96 h-96 bg-gradient-to-br from-blue-300/30 to-cyan-300/30 rounded-full blur-3xl" />
-          <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-gradient-to-br from-sky-300/30 to-blue-400/30 rounded-full blur-3xl" />
-        </div>
-
-        {/* ✅ Replaced Header with Navigation */}
-        <Navigation />
-
-        <div className="flex items-center justify-center min-h-[calc(100vh-5rem)] px-4 relative z-10 pt-20">
-          <Card className="max-w-md text-center bg-white/80 backdrop-blur-xl border-slate-200 shadow-xl shadow-slate-200/50">
-            <CardHeader>
-              <div className="p-6 bg-gradient-to-br from-blue-50 to-sky-50 rounded-full w-fit mx-auto mb-4 border border-blue-100">
-                <BarChart3 className="h-16 w-16 text-blue-600" />
-              </div>
-              <CardTitle className="text-3xl text-slate-900">Start Your Journey</CardTitle>
-              <CardDescription className="text-base text-slate-600 mt-2 font-medium">
-                Take your first assessment to unlock detailed progress tracking and analytics
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Button
-                onClick={() => navigate("/")}
-                className="w-full bg-blue-600 hover:bg-blue-700 text-white shadow-md shadow-blue-500/20"
-                size="lg"
-              >
-                Take Your First Assessment
-              </Button>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-    )
-  }
-
+  // ─── Main Render ───────────────────────────────────────────────────────────
   return (
-    <div className="min-h-screen bg-slate-50 relative overflow-hidden font-sans">
-      
-      {/* Light Theme Orbs */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none" style={{ zIndex: 0 }}>
-        <div
-          className="absolute -top-40 -right-40 w-96 h-96 bg-gradient-to-br from-blue-300/30 to-cyan-300/30 rounded-full blur-3xl"
-          style={{
-            transform: `translate(${mousePosition.x}px, ${mousePosition.y}px)`,
-            transition: "transform 0.5s ease-out",
-          }}
-        />
-        <div
-          className="absolute -bottom-40 -left-40 w-96 h-96 bg-gradient-to-br from-sky-300/30 to-blue-400/30 rounded-full blur-3xl"
-          style={{
-            transform: `translate(${-mousePosition.x}px, ${-mousePosition.y}px)`,
-            transition: "transform 0.5s ease-out",
-          }}
-        />
-      </div>
+    <div className="min-h-screen bg-slate-950 flex" style={{ fontFamily: "'DM Sans', system-ui, sans-serif" }}>
 
-      {/* ✅ Replaced Header with Navigation */}
-      <Navigation />
-
-      {/* Main Content - Added pt-32 so it clears the fixed Navigation bar */}
-      <main className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-32 pb-12">
-        
-        {/* Page Header */}
-        <div className="text-center mb-12">
-          <div className="inline-flex items-center gap-2 bg-blue-50 border border-blue-100 px-6 py-3 rounded-full mb-6 shadow-sm">
-            <Activity className="h-4 w-4 text-blue-600" />
-            <span className="text-sm font-bold text-blue-800">Performance Analytics</span>
-          </div>
-
-          <h1 className="text-5xl font-bold text-slate-900 mb-4">
-            Your Learning <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-sky-500">Dashboard</span>
-          </h1>
-          <p className="text-lg text-slate-600 max-w-2xl mx-auto font-medium">
-            Track your improvement, analyze performance, and celebrate achievements
-          </p>
+      {/* ═══ SIDEBAR ══════════════════════════════════════════════════════════ */}
+      <aside className="hidden lg:flex flex-col w-52 bg-slate-900/90 border-r border-slate-800/60 fixed h-full z-20 backdrop-blur-xl">
+        <div className="px-5 py-4 border-b border-slate-800/60">
+          <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-widest">Student Portal</p>
         </div>
-
-        {/* Stats Grid */}
-        {stats && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-            <Card className="bg-white border-slate-200 hover:border-blue-300 hover:shadow-md transition-all duration-300 group overflow-hidden relative shadow-sm">
-              <div className="absolute inset-0 bg-gradient-to-br from-blue-50/50 to-sky-50/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-              <CardContent className="p-6 relative z-10">
-                <div className="flex items-center justify-between mb-3">
-                  <div className="p-2.5 bg-blue-50 border border-blue-100 rounded-lg">
-                    <Target className="h-5 w-5 text-blue-600" />
-                  </div>
-                  <ChevronRight className="h-5 w-5 text-slate-400 group-hover:text-blue-500 transition-colors" />
-                </div>
-                <div className="text-4xl font-bold text-slate-900 mb-1">{stats.totalTests}</div>
-                <div className="text-sm text-slate-500 font-medium">Total Assessments</div>
-              </CardContent>
-            </Card>
-
-            <Card className="bg-white border-slate-200 hover:border-emerald-300 hover:shadow-md transition-all duration-300 group overflow-hidden relative shadow-sm">
-              <div className="absolute inset-0 bg-gradient-to-br from-emerald-50/50 to-teal-50/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-              <CardContent className="p-6 relative z-10">
-                <div className="flex items-center justify-between mb-3">
-                  <div className="p-2.5 bg-emerald-50 border border-emerald-100 rounded-lg">
-                    <BarChart3 className="h-5 w-5 text-emerald-600" />
-                  </div>
-                  <ChevronRight className="h-5 w-5 text-slate-400 group-hover:text-emerald-500 transition-colors" />
-                </div>
-                <div className={`text-4xl font-bold mb-1 ${getScoreColor(stats.averageScore)}`}>
-                  {stats.averageScore}%
-                </div>
-                <div className="text-sm text-slate-500 font-medium">Average Score</div>
-              </CardContent>
-            </Card>
-
-            <Card className="bg-white border-slate-200 hover:border-amber-300 hover:shadow-md transition-all duration-300 group overflow-hidden relative shadow-sm">
-              <div className="absolute inset-0 bg-gradient-to-br from-amber-50/50 to-orange-50/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-              <CardContent className="p-6 relative z-10">
-                <div className="flex items-center justify-between mb-3">
-                  <div className="p-2.5 bg-amber-50 border border-amber-100 rounded-lg">
-                    <Trophy className="h-5 w-5 text-amber-600" />
-                  </div>
-                  <ChevronRight className="h-5 w-5 text-slate-400 group-hover:text-amber-500 transition-colors" />
-                </div>
-                <div className="flex items-center gap-2 mb-1">
-                  <div className={`text-4xl font-bold ${getScoreColor(stats.bestScore)}`}>
-                    {stats.bestScore}%
-                  </div>
-                  <Badge className="bg-slate-100 text-slate-600 border-slate-200 capitalize text-[10px] px-2 py-0">
-                    {stats.bestDifficulty}
-                  </Badge>
-                </div>
-                <div className="text-sm text-slate-500 font-medium">Best Performance</div>
-              </CardContent>
-            </Card>
-
-            <Card className="bg-white border-slate-200 hover:border-indigo-300 hover:shadow-md transition-all duration-300 group overflow-hidden relative shadow-sm">
-              <div className="absolute inset-0 bg-gradient-to-br from-indigo-50/50 to-blue-50/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-              <CardContent className="p-6 relative z-10">
-                <div className="flex items-center justify-between mb-3">
-                  <div className="p-2.5 bg-indigo-50 border border-indigo-100 rounded-lg">
-                    <Sparkles className="h-5 w-5 text-indigo-600" />
-                  </div>
-                  {getTrendIcon(stats.trend)}
-                </div>
-                <div className={`text-3xl font-bold capitalize mb-1 ${getTrendColor(stats.trend)}`}>
-                  {stats.trend}
-                </div>
-                <div className="text-sm text-slate-500 font-medium">Learning Trend</div>
-              </CardContent>
-            </Card>
-          </div>
-        )}
-
-        {/* Charts Row */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-          {/* Performance Chart */}
-          <Card className="bg-white border-slate-200 overflow-hidden relative shadow-sm">
-            <div className="absolute inset-0 bg-gradient-to-br from-slate-50/50 to-white opacity-50" />
-            <CardHeader className="relative z-10 border-b border-slate-100 pb-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-blue-50 border border-blue-100 rounded-lg">
-                    <BarChart3 className="h-5 w-5 text-blue-600" />
-                  </div>
-                  <div>
-                    <CardTitle className="text-lg text-slate-900">Recent Performance</CardTitle>
-                    <CardDescription className="text-slate-500 font-medium">Last 7 assessments</CardDescription>
-                  </div>
-                </div>
-                <Badge className="bg-blue-100 text-blue-700 border-blue-200">
-                  Trending
-                </Badge>
-              </div>
-            </CardHeader>
-            <CardContent className="relative z-10 pt-6">
-              <canvas ref={chartCanvasRef} className="w-full h-64" />
-            </CardContent>
-          </Card>
-
-          {/* Gauge Chart */}
-          <Card className="bg-white border-slate-200 overflow-hidden relative shadow-sm">
-            <div className="absolute inset-0 bg-gradient-to-br from-slate-50/50 to-white opacity-50" />
-            <CardHeader className="relative z-10 border-b border-slate-100 pb-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-emerald-50 border border-emerald-100 rounded-lg">
-                    <CircleDot className="h-5 w-5 text-emerald-600" />
-                  </div>
-                  <div>
-                    <CardTitle className="text-lg text-slate-900">Success Rate</CardTitle>
-                    <CardDescription className="text-slate-500 font-medium">Overall performance</CardDescription>
-                  </div>
-                </div>
-                <Badge className="bg-emerald-100 text-emerald-700 border-emerald-200">
-                  Active
-                </Badge>
-              </div>
-            </CardHeader>
-            <CardContent className="relative z-10 pt-6">
-              <canvas ref={gaugeCanvasRef} className="w-full h-64" />
-            </CardContent>
-          </Card>
+        <nav className="flex-1 px-3 py-4 space-y-0.5">
+          {[
+            { id: "dashboard", icon: LayoutDashboard, label: "Dashboard",    path: "/progress"    },
+            { id: "tests",     icon: FileText,         label: "My Tests",     path: "/assessments" },
+            { id: "learning",  icon: Map,              label: "Learning Path",path: "/"            },
+            { id: "settings",  icon: Settings,         label: "Settings",     path: "/"            },
+          ].map(({ id, label, path }) => (
+            <button
+              key={id}
+              onClick={() => { setActiveNav(id); navigate(path) }}
+              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all ${
+                activeNav === id ? "bg-slate-800 text-white" : "text-slate-400 hover:text-white hover:bg-slate-800/50"
+              }`}
+            >
+              {label}
+            </button>
+          ))}
+        </nav>
+        <div className="px-3 pb-5 border-t border-slate-800/50 pt-3">
+          <button
+            onClick={logout}
+            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-slate-400 hover:text-red-400 hover:bg-red-500/10 transition-all"
+          >
+            <LogOut className="h-4 w-4" /> Logout
+          </button>
         </div>
+      </aside>
 
-        {/* Badge Collection */}
-        {badgeStats && (
-          <Card className="mb-8 bg-gradient-to-br from-slate-900 to-slate-800 border-slate-800 overflow-hidden relative group shadow-xl">
-            {/* Kept this dark intentionally to make the badges pop like a display case! */}
-            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-amber-900/40 via-transparent to-transparent opacity-60" />
-            <CardHeader className="relative z-10">
-              <div className="flex items-center gap-3">
-                <div className="p-2.5 bg-gradient-to-br from-amber-500 to-orange-500 rounded-xl shadow-md border border-amber-400/50">
-                  <Award className="h-6 w-6 text-white" />
-                </div>
-                <div>
-                  <CardTitle className="text-2xl text-white">Achievement Collection</CardTitle>
-                  <CardDescription className="text-slate-400 font-medium text-base">Badges earned through excellence</CardDescription>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent className="relative z-10">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                
-                <div className="relative group/badge">
-                  <div className="absolute inset-0 bg-gradient-to-br from-amber-500/20 to-orange-500/20 rounded-2xl blur-xl opacity-0 group-hover/badge:opacity-100 transition-opacity duration-500" />
-                  <div className="relative text-center p-8 bg-slate-800/80 rounded-2xl border border-amber-500/30 hover:border-amber-500/60 transition-all duration-300 hover:-translate-y-1 shadow-lg">
-                    <div className="text-7xl mb-4 transform group-hover/badge:scale-110 transition-transform duration-300">🥉</div>
-                    <div className="text-4xl font-bold text-amber-400 mb-2">{badgeStats.beginner}</div>
-                    <p className="text-sm text-slate-300 font-medium">Beginner Badges</p>
-                  </div>
-                </div>
+      {/* ═══ MAIN CONTENT ═════════════════════════════════════════════════════ */}
+      <div className="flex-1 lg:ml-52 flex flex-col min-h-screen">
 
-                <div className="relative group/badge">
-                  <div className="absolute inset-0 bg-gradient-to-br from-slate-400/20 to-slate-300/20 rounded-2xl blur-xl opacity-0 group-hover/badge:opacity-100 transition-opacity duration-500" />
-                  <div className="relative text-center p-8 bg-slate-800/80 rounded-2xl border border-slate-400/30 hover:border-slate-400/60 transition-all duration-300 hover:-translate-y-1 shadow-lg">
-                    <div className="text-7xl mb-4 transform group-hover/badge:scale-110 transition-transform duration-300">🥈</div>
-                    <div className="text-4xl font-bold text-slate-300 mb-2">{badgeStats.intermediate}</div>
-                    <p className="text-sm text-slate-300 font-medium">Intermediate Badges</p>
-                  </div>
-                </div>
-
-                <div className="relative group/badge">
-                  <div className="absolute inset-0 bg-gradient-to-br from-yellow-400/20 to-amber-500/20 rounded-2xl blur-xl opacity-0 group-hover/badge:opacity-100 transition-opacity duration-500" />
-                  <div className="relative text-center p-8 bg-slate-800/80 rounded-2xl border border-yellow-400/30 hover:border-yellow-400/60 transition-all duration-300 hover:-translate-y-1 shadow-lg">
-                    <div className="text-7xl mb-4 transform group-hover/badge:scale-110 transition-transform duration-300">🥇</div>
-                    <div className="text-4xl font-bold text-yellow-400 mb-2">{badgeStats.advanced}</div>
-                    <p className="text-sm text-slate-300 font-medium">Advanced Badges</p>
-                  </div>
-                </div>
-
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Company & Topic Performance */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-          
-          {/* Company Performance */}
-          {stats?.companyStats && Object.keys(stats.companyStats).length > 0 && (
-            <Card className="bg-white border-slate-200 overflow-hidden relative shadow-sm">
-              <CardHeader className="relative z-10 border-b border-slate-100 pb-4">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-blue-50 border border-blue-100 rounded-lg">
-                    <Building2 className="h-5 w-5 text-blue-600" />
-                  </div>
-                  <div>
-                    <CardTitle className="text-lg text-slate-900">Company Performance</CardTitle>
-                    <CardDescription className="text-slate-500 font-medium">Target-specific scores</CardDescription>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent className="relative z-10 pt-6">
-                <div className="space-y-5">
-                  {Object.entries(stats.companyStats)
-                    .sort(([, a], [, b]) => b.avgScore - a.avgScore)
-                    .map(([company, data]) => (
-                      <div key={company} className="group/item">
-                        <div className="flex items-center justify-between mb-2">
-                          <div className="flex items-center gap-3">
-                            <div className="text-2xl drop-shadow-sm">
-                              {company === "google" ? "🔍" : 
-                               company === "microsoft" ? "🪟" : 
-                               company === "amazon" ? "📦" : 
-                               company === "apple" ? "🍎" : 
-                               company === "meta" ? "👥" : "🏢"}
-                            </div>
-                            <div>
-                              <span className="font-bold capitalize text-slate-900">
-                                {company === "general" ? "General" : company}
-                              </span>
-                              <p className="text-xs text-slate-500 font-medium">
-                                {data.tests} test{data.tests !== 1 ? "s" : ""}
-                              </p>
-                            </div>
-                          </div>
-                          <Badge className={`${
-                            data.avgScore >= 80 ? "bg-emerald-100 text-emerald-700 border-emerald-200" :
-                            data.avgScore >= 60 ? "bg-blue-100 text-blue-700 border-blue-200" :
-                            "bg-amber-100 text-amber-700 border-amber-200"
-                          } font-bold`}>
-                            {data.avgScore}%
-                          </Badge>
-                        </div>
-                        <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden border border-slate-200">
-                          <div
-                            className={`h-full rounded-full transition-all duration-500 ${
-                              data.avgScore >= 80 ? "bg-gradient-to-r from-emerald-400 to-teal-500" :
-                              data.avgScore >= 60 ? "bg-gradient-to-r from-blue-400 to-sky-500" :
-                              "bg-gradient-to-r from-amber-400 to-orange-500"
-                            }`}
-                            style={{ width: `${data.avgScore}%` }}
-                          />
-                        </div>
-                      </div>
-                    ))}
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Topic Mastery */}
-          {stats?.topicStats && Object.keys(stats.topicStats).length > 0 && (
-            <Card className="bg-white border-slate-200 overflow-hidden relative shadow-sm">
-              <CardHeader className="relative z-10 border-b border-slate-100 pb-4">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-indigo-50 border border-indigo-100 rounded-lg">
-                    <BookOpen className="h-5 w-5 text-indigo-600" />
-                  </div>
-                  <div>
-                    <CardTitle className="text-lg text-slate-900">Topic Mastery</CardTitle>
-                    <CardDescription className="text-slate-500 font-medium">Skills breakdown</CardDescription>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent className="relative z-10 pt-6">
-                <div className="space-y-5">
-                  {Object.entries(stats.topicStats)
-                    .sort(([, a], [, b]) => b.accuracy - a.accuracy)
-                    .slice(0, 5)
-                    .map(([topic, data]) => (
-                      <div key={topic} className="group/item">
-                        <div className="flex items-center justify-between mb-2">
-                          <div>
-                            <span className="font-bold capitalize text-slate-900 text-sm">{topic}</span>
-                            <p className="text-xs text-slate-500 font-medium">
-                              {data.correct}/{data.total} correct
-                            </p>
-                          </div>
-                          <Badge className={`${
-                            data.accuracy >= 80 ? "bg-emerald-100 text-emerald-700 border-emerald-200" :
-                            data.accuracy >= 60 ? "bg-blue-100 text-blue-700 border-blue-200" :
-                            "bg-amber-100 text-amber-700 border-amber-200"
-                          } font-bold`}>
-                            {data.accuracy}%
-                          </Badge>
-                        </div>
-                        <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden border border-slate-200">
-                          <div
-                            className={`h-full rounded-full transition-all duration-500 ${
-                              data.accuracy >= 80 ? "bg-gradient-to-r from-emerald-400 to-teal-500" :
-                              data.accuracy >= 60 ? "bg-gradient-to-r from-blue-400 to-sky-500" :
-                              "bg-gradient-to-r from-amber-400 to-orange-500"
-                            }`}
-                            style={{ width: `${data.accuracy}%` }}
-                          />
-                        </div>
-                      </div>
-                    ))}
-                </div>
-              </CardContent>
-            </Card>
-          )}
-        </div>
-
-        {/* Recent History List */}
-        <Card className="bg-white border-slate-200 mb-8 overflow-hidden relative shadow-sm">
-          <CardHeader className="relative z-10 border-b border-slate-100 pb-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-blue-50 border border-blue-100 rounded-lg">
-                <Calendar className="h-5 w-5 text-blue-600" />
-              </div>
-              <div>
-                <CardTitle className="text-xl text-slate-900">Recent Activity</CardTitle>
-                <CardDescription className="text-slate-500 font-medium">Latest assessment results</CardDescription>
-              </div>
+        {/* Top bar */}
+        <header className="sticky top-0 z-10 flex items-center justify-between px-6 py-3.5 bg-slate-950/85 backdrop-blur-xl border-b border-slate-800/40">
+          <div className="flex items-center gap-2.5">
+            <div className="p-1.5 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-lg shadow-lg shadow-cyan-500/20">
+              <Brain className="h-4.5 w-4.5 text-white" style={{ height: "18px", width: "18px" }} />
             </div>
-          </CardHeader>
-          <CardContent className="relative z-10 pt-6 bg-slate-50/50">
-            <div className="space-y-4">
-              {progressData.slice(0, 5).map((test, index) => (
-                <div
-                  key={index}
-                  className="flex flex-col sm:flex-row sm:items-center justify-between p-5 bg-white border border-slate-200 rounded-xl shadow-sm hover:shadow-md hover:border-blue-200 transition-all duration-300 group/item gap-4"
-                  style={{
-                    animation: `slideUp 0.5s ease-out ${index * 0.1}s backwards`,
-                  }}
-                >
-                  <div className="flex items-center gap-4">
-                    <div className={`p-3 rounded-xl border ${
-                      test.score >= 80 ? "bg-emerald-50 border-emerald-100" :
-                      test.score >= 60 ? "bg-blue-50 border-blue-100" :
-                      "bg-amber-50 border-amber-100"
-                    }`}>
-                      <Trophy className={`h-5 w-5 ${
-                        test.score >= 80 ? "text-emerald-600" :
-                        test.score >= 60 ? "text-blue-600" :
-                        "text-amber-600"
-                      }`} />
-                    </div>
-                    <div>
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className={`text-2xl font-bold ${getScoreColor(test.score)}`}>
-                          {test.score}%
-                        </span>
-                        <Badge className="capitalize bg-slate-100 text-slate-600 border-slate-200 px-2 py-0">
-                          {test.difficulty}
-                        </Badge>
+            <span className="text-base font-bold text-white tracking-tight">
+              Aptitude<span className="text-cyan-400">AI</span>
+            </span>
+          </div>
+          <div className="flex items-center gap-2.5">
+            <button className="relative p-2 text-slate-400 hover:text-white transition-colors rounded-lg hover:bg-slate-800/50">
+              <Bell className="h-5 w-5" />
+              <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 bg-cyan-400 rounded-full" />
+            </button>
+            {streak > 0 && (
+              <div className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-500/10 border border-amber-500/30 rounded-full">
+                <Flame className="h-3.5 w-3.5 text-amber-400" />
+                <span className="text-xs font-bold text-amber-300">{streak} Days</span>
+              </div>
+            )}
+            <button
+              onClick={() => navigate("/")}
+              className="w-8 h-8 rounded-full bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center text-white text-sm font-bold shadow-lg"
+            >
+              {user?.name?.[0]?.toUpperCase() || "U"}
+            </button>
+          </div>
+        </header>
+
+        {/* Page content */}
+        <main className="flex-1 px-6 py-7 w-full max-w-7xl mx-auto">
+
+          {/* Page heading + streak */}
+          <div className="flex items-start justify-between mb-7">
+            <div>
+              <h1 className="text-xl font-bold text-white">Student Dashboard</h1>
+              <p className="text-slate-400 text-sm mt-0.5">Track your growth and master your employability skills.</p>
+            </div>
+            {streak > 0 && (
+              <div className="hidden sm:flex items-center gap-2 text-sm text-slate-400">
+                Current Streak:
+                <span className="flex items-center gap-1 px-2.5 py-1 bg-amber-500/10 border border-amber-500/30 rounded-full text-amber-300 font-semibold text-xs">
+                  <Flame className="h-3 w-3 text-amber-400" /> {streak} Days
+                </span>
+              </div>
+            )}
+          </div>
+
+          {/* ── Row 1: Score Hero + Growth Chart ───────────────────────── */}
+          <div className="grid grid-cols-1 lg:grid-cols-5 gap-5 mb-5">
+
+            {/* Hero readiness card */}
+            <Card className="lg:col-span-3 border-0 overflow-hidden relative bg-transparent">
+              <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-cyan-950/70 via-slate-900 to-blue-950/60 border border-cyan-800/25" />
+              <div className="absolute right-0 top-0 w-56 h-56 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none" />
+              <CardContent className="relative z-10 p-6">
+                <p className="text-[11px] font-bold text-cyan-400 uppercase tracking-widest mb-3 flex items-center gap-1.5">
+                  <TrendingUp className="h-3 w-3" />
+                  {stats?.trend === "improving" ? "+Progress from last week" : "Performance overview"}
+                </p>
+                <div className="flex items-center gap-5">
+                  {/* SVG Gauge */}
+                  <div className="flex-shrink-0">
+                    <svg width="108" height="108" viewBox="0 0 108 108">
+                      <circle cx="54" cy="54" r="43" fill="none" stroke="#1e3a4a" strokeWidth="10" />
+                      <circle
+                        cx="54" cy="54" r="43"
+                        fill="none"
+                        stroke="url(#cg)"
+                        strokeWidth="10"
+                        strokeLinecap="round"
+                        strokeDasharray={`${(stats?.averageScore || 0) * 2.703} 270.3`}
+                        strokeDashoffset="67.6"
+                        transform="rotate(-90 54 54)"
+                      />
+                      <defs>
+                        <linearGradient id="cg" x1="0%" y1="0%" x2="100%" y2="0%">
+                          <stop offset="0%" stopColor="#06b6d4" />
+                          <stop offset="100%" stopColor="#3b82f6" />
+                        </linearGradient>
+                      </defs>
+                      <text x="54" y="50" textAnchor="middle" fill="white" fontSize="19" fontWeight="bold">{stats?.averageScore || 0}%</text>
+                      <text x="54" y="64" textAnchor="middle" fill="#64748b" fontSize="8.5" fontWeight="600">READY</text>
+                    </svg>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h2 className="text-xl font-bold text-white mb-1.5">
+                      Looking sharp,{" "}
+                      <span className="text-cyan-400">{user?.name?.split(" ")[0] || "Student"}!</span>
+                    </h2>
+                    <p className="text-slate-300 text-sm leading-relaxed mb-4">
+                      Your readiness score is in the{" "}
+                      <strong className="text-white">top {Math.max(5, 100 - (stats?.averageScore || 0) + 15)}%</strong>{" "}
+                      for Software Engineering roles.
+                      {topicEntries.length > 0 && (
+                        <> Focus on <strong className="text-cyan-300">
+                          "{topicEntries[topicEntries.length - 1]?.[0]}"
+                        </strong> to hit the next milestone.</>
+                      )}
+                    </p>
+                    <Button
+                      onClick={() => navigate("/assessments")}
+                      className="bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold text-sm px-4 py-2 h-auto rounded-lg"
+                    >
+                      View Skill Breakdown
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Growth Momentum */}
+            <Card className="lg:col-span-2 bg-white/[0.03] border-slate-800/50">
+              <CardHeader className="px-5 pt-5 pb-2">
+                <CardTitle className="text-sm font-semibold text-white">Growth Momentum</CardTitle>
+                <CardDescription className="text-xs text-slate-500">
+                  Performance over your last {Math.min(progressData.length, 5)} assessments
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="px-3 pb-4">
+                <canvas ref={chartRef} className="w-full" style={{ height: "160px" }} />
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* ── Row 2: Learning Path + Action Cards ────────────────────── */}
+          <div className="grid grid-cols-1 lg:grid-cols-5 gap-5 mb-5">
+
+            {/* Learning Path */}
+            <Card className="lg:col-span-3 bg-white/[0.03] border-slate-800/50">
+              <CardHeader className="px-6 pt-5 pb-3">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle className="text-sm font-semibold text-white">Your Learning Path</CardTitle>
+                    <CardDescription className="text-xs text-slate-500 mt-0.5">Next missions tailored to your skill gaps</CardDescription>
+                  </div>
+                  <button
+                    onClick={() => navigate("/")}
+                    className="text-cyan-400 hover:text-cyan-300 text-xs font-semibold flex items-center gap-0.5 transition-colors"
+                  >
+                    View Full Map <ChevronRight className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+              </CardHeader>
+              <CardContent className="px-6 pb-5">
+                <div className="space-y-0 divide-y divide-slate-800/40">
+                  {learningItems.map((item) => (
+                    <div key={item.label} className="flex items-center justify-between py-3.5">
+                      <div className="flex items-center gap-3">
+                        {item.status === "completed" ? (
+                          <div className="w-7 h-7 rounded-full border-2 border-slate-700 flex items-center justify-center flex-shrink-0">
+                            <CheckCircle2 className="h-3.5 w-3.5 text-slate-500" />
+                          </div>
+                        ) : item.status === "active" ? (
+                          <div className="w-7 h-7 rounded-full bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center flex-shrink-0 shadow-md shadow-cyan-500/30">
+                            <Zap className="h-3.5 w-3.5 text-white" />
+                          </div>
+                        ) : (
+                          <div className="w-7 h-7 rounded-full border-2 border-slate-800 flex items-center justify-center flex-shrink-0">
+                            <Lock className="h-3 w-3 text-slate-700" />
+                          </div>
+                        )}
+                        <div>
+                          <p className={`text-sm font-semibold ${item.status === "locked" ? "text-slate-600" : "text-white"}`}>
+                            {item.label}
+                          </p>
+                          {item.detail && (
+                            <p className="text-xs text-slate-500 mt-0.5">{item.detail}</p>
+                          )}
+                          {item.status === "active" && (
+                            <div className="mt-1.5 w-36 bg-slate-800 rounded-full h-1.5 overflow-hidden">
+                              <div className="h-full bg-gradient-to-r from-cyan-500 to-blue-500 rounded-full" style={{ width: `${item.progress}%` }} />
+                            </div>
+                          )}
+                        </div>
                       </div>
-                      <div className="flex items-center gap-3 text-sm text-slate-500 font-medium">
-                        <span className="flex items-center gap-1">
-                          <Clock className="h-3.5 w-3.5" />
-                          {formatTime(test.timeSpent)}
-                        </span>
-                        {test.company && test.company !== "general" && (
-                          <span className="flex items-center gap-1 capitalize">
-                            <Building2 className="h-3.5 w-3.5" />
-                            {test.company}
-                          </span>
+                      <div className="flex items-center gap-3 flex-shrink-0">
+                        <span className="text-xs text-slate-600">{item.time}</span>
+                        {item.status === "active" && (
+                          <Button
+                            size="sm"
+                            onClick={() => navigate("/")}
+                            className="bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold text-xs h-7 px-3 rounded-lg"
+                          >
+                            Resume Mission
+                          </Button>
                         )}
                       </div>
                     </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Right action cards */}
+            <div className="lg:col-span-2 flex flex-col gap-4">
+
+              {/* Resume Test */}
+              <Card className="bg-white/[0.03] border-slate-800/50 flex-1">
+                <CardContent className="p-5">
+                  <div className="w-8 h-8 rounded-xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center mb-3">
+                    <Play className="h-4 w-4 text-cyan-400" />
                   </div>
-                  <div className="text-right">
-                    <div className="text-sm font-bold text-slate-900">{formatDate(test.date)}</div>
-                    {test.badge && (
-                      <div className="text-xs font-semibold text-slate-600 mt-1 flex justify-end items-center gap-1">
-                        {getBadgeIcon(test.badge.level)} <span className="capitalize">{test.badge.level}</span>
+                  <h3 className="text-sm font-bold text-white mb-1">Resume Test</h3>
+                  <p className="text-xs text-slate-400 leading-relaxed mb-4">
+                    Continue your latest assessment from where you left off.
+                  </p>
+                  <Button
+                    onClick={() => navigate("/")}
+                    className="w-full bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold text-sm h-9 rounded-xl flex items-center justify-center gap-2"
+                  >
+                    Start Now <ArrowRight className="h-3.5 w-3.5" />
+                  </Button>
+                </CardContent>
+              </Card>
+
+              {/* AI Mock Interview */}
+              <Card className="bg-white/[0.03] border-slate-800/50 flex-1">
+                <CardContent className="p-5">
+                  <div className="w-8 h-8 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center mb-3">
+                    <MessageSquare className="h-4 w-4 text-amber-400" />
+                  </div>
+                  <h3 className="text-sm font-bold text-white mb-1">AI Mock Interview</h3>
+                  <p className="text-xs text-slate-400 leading-relaxed mb-4">
+                    Experience a real-time aptitude interview powered by AI.{" "}
+                    <span className="text-amber-400 font-medium">New feature</span>
+                  </p>
+                  <Button
+                    onClick={() => navigate("/employability")}
+                    className="w-full bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/35 text-amber-300 font-bold text-sm h-9 rounded-xl flex items-center justify-center gap-2"
+                  >
+                    Try Beta <ArrowRight className="h-3.5 w-3.5" />
+                  </Button>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+
+          {/* ── Row 3: Recent Test History (table style) ────────────────── */}
+          <Card className="bg-white/[0.03] border-slate-800/50 mb-5">
+            <CardHeader className="px-6 pt-5 pb-3">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-sm font-semibold text-white">Recent Test History</CardTitle>
+                <button
+                  onClick={() => navigate("/assessments")}
+                  className="text-cyan-400 hover:text-cyan-300 text-xs font-semibold transition-colors"
+                >
+                  View All Results
+                </button>
+              </div>
+            </CardHeader>
+            <CardContent className="px-6 pb-5">
+              {/* Header row */}
+              <div className="grid gap-4 pb-2.5 border-b border-slate-800/50 text-[11px] font-semibold text-slate-500 uppercase tracking-wider"
+                style={{ gridTemplateColumns: "2fr 1fr 0.7fr 0.8fr 1.2fr" }}
+              >
+                <span>Test Category</span>
+                <span>Date Taken</span>
+                <span>Score</span>
+                <span>Status</span>
+                <span className="text-right">Action</span>
+              </div>
+
+              {/* Data rows */}
+              <div className="divide-y divide-slate-800/30">
+                {progressData.slice(0, 5).map((test, i) => {
+                  const status = scoreLabel(test.score)
+                  return (
+                    <div
+                      key={i}
+                      className="grid gap-4 py-3.5 items-center hover:bg-slate-800/20 -mx-2 px-2 rounded-lg transition-colors group"
+                      style={{
+                        gridTemplateColumns: "2fr 1fr 0.7fr 0.8fr 1.2fr",
+                        animation: `slideUp 0.4s ease-out ${i * 0.06}s backwards`,
+                      }}
+                    >
+                      {/* Category */}
+                      <div className="flex items-center gap-3">
+                        <div className="w-7 h-7 rounded-lg bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center flex-shrink-0">
+                          <Brain className="h-3.5 w-3.5 text-cyan-400" />
+                        </div>
+                        <div>
+                          <p className="text-sm font-semibold text-white capitalize leading-tight">
+                            {test.company && test.company !== "general" ? `${test.company}: ` : "Aptitude: "}
+                            {test.difficulty}
+                          </p>
+                          <p className="text-xs text-slate-600 capitalize">{test.difficulty} level</p>
+                        </div>
                       </div>
-                    )}
+                      <span className="text-sm text-slate-400">{fmtDate(test.date || test.createdAt)}</span>
+                      <span className={`text-sm font-bold ${scoreColor(test.score)}`}>{test.score}%</span>
+                      <span className={`text-sm font-semibold ${labelColor(status)}`}>{status}</span>
+                      <div className="text-right">
+                        <button
+                          onClick={() => navigate("/results")}
+                          className="text-xs font-bold text-white hover:text-cyan-400 transition-colors"
+                        >
+                          Detailed Feedback
+                        </button>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* ── Row 4: Topic + Company (if data exists) ─────────────────── */}
+          {stats && (Object.keys(stats.topicStats).length > 0 || Object.keys(stats.companyStats).length > 0) && (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 mb-5">
+
+              {Object.keys(stats.topicStats).length > 0 && (
+                <Card className="bg-white/[0.03] border-slate-800/50">
+                  <CardHeader className="px-5 pt-5 pb-3">
+                    <div className="flex items-center gap-2.5">
+                      <div className="p-1.5 bg-gradient-to-br from-indigo-600 to-blue-700 rounded-lg">
+                        <BookOpen className="h-3.5 w-3.5 text-white" />
+                      </div>
+                      <div>
+                        <CardTitle className="text-sm font-semibold text-white">Topic Mastery</CardTitle>
+                        <CardDescription className="text-xs text-slate-500">Skills breakdown by area</CardDescription>
+                      </div>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="px-5 pb-5 space-y-3.5">
+                    {Object.entries(stats.topicStats).sort(([,a],[,b]) => b.accuracy - a.accuracy).slice(0, 5).map(([topic, data]) => (
+                      <div key={topic}>
+                        <div className="flex justify-between mb-1">
+                          <span className="text-xs font-semibold text-white capitalize">{topic}</span>
+                          <span className={`text-xs font-bold ${scoreColor(data.accuracy)}`}>{data.accuracy}%</span>
+                        </div>
+                        <div className="w-full bg-slate-800/60 rounded-full h-1.5 overflow-hidden">
+                          <div className={`h-full rounded-full bg-gradient-to-r ${barColor(data.accuracy)}`} style={{ width: `${data.accuracy}%` }} />
+                        </div>
+                        <p className="text-[11px] text-slate-600 mt-0.5">{data.correct}/{data.total} correct</p>
+                      </div>
+                    ))}
+                  </CardContent>
+                </Card>
+              )}
+
+              {Object.keys(stats.companyStats).length > 0 && (
+                <Card className="bg-white/[0.03] border-slate-800/50">
+                  <CardHeader className="px-5 pt-5 pb-3">
+                    <div className="flex items-center gap-2.5">
+                      <div className="p-1.5 bg-gradient-to-br from-blue-600 to-sky-600 rounded-lg">
+                        <Building2 className="h-3.5 w-3.5 text-white" />
+                      </div>
+                      <div>
+                        <CardTitle className="text-sm font-semibold text-white">Company Performance</CardTitle>
+                        <CardDescription className="text-xs text-slate-500">Target-specific scores</CardDescription>
+                      </div>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="px-5 pb-5 space-y-3.5">
+                    {Object.entries(stats.companyStats).sort(([,a],[,b]) => b.avgScore - a.avgScore).map(([company, data]) => {
+                      const emoji = { google:"🔍", microsoft:"🪟", amazon:"📦", apple:"🍎", meta:"👥" }[company] || "🏢"
+                      return (
+                        <div key={company}>
+                          <div className="flex items-center justify-between mb-1">
+                            <div className="flex items-center gap-2">
+                              <span className="text-sm">{emoji}</span>
+                              <span className="text-xs font-semibold text-white capitalize">{company === "general" ? "General" : company}</span>
+                              <span className="text-[11px] text-slate-600">{data.tests} tests</span>
+                            </div>
+                            <span className={`text-xs font-bold ${scoreColor(data.avgScore)}`}>{data.avgScore}%</span>
+                          </div>
+                          <div className="w-full bg-slate-800/60 rounded-full h-1.5 overflow-hidden">
+                            <div className={`h-full rounded-full bg-gradient-to-r ${barColor(data.avgScore)}`} style={{ width: `${data.avgScore}%` }} />
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </CardContent>
+                </Card>
+              )}
+            </div>
+          )}
+
+          {/* Badges row */}
+          {badgeStats && (
+            <Card className="bg-white/[0.03] border-slate-800/50 mb-5">
+              <CardContent className="px-6 py-5">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2.5">
+                    <Trophy className="h-4 w-4 text-amber-400" />
+                    <span className="text-sm font-semibold text-white">Achievement Collection</span>
+                  </div>
+                  <div className="flex items-center gap-8">
+                    {[
+                      { emoji: "🥉", count: badgeStats.beginner,     label: "Beginner"     },
+                      { emoji: "🥈", count: badgeStats.intermediate, label: "Intermediate" },
+                      { emoji: "🥇", count: badgeStats.advanced,     label: "Advanced"     },
+                    ].map(({ emoji, count, label }) => (
+                      <div key={label} className="text-center">
+                        <span className="text-xl">{emoji}</span>
+                        <div className="text-base font-bold text-white">{count}</div>
+                        <div className="text-[11px] text-slate-500">{label}</div>
+                      </div>
+                    ))}
                   </div>
                 </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
+              </CardContent>
+            </Card>
+          )}
 
-        {/* CTA */}
-        <div className="text-center">
-          <Button
-            onClick={() => navigate("/")}
-            size="lg"
-            className="text-lg px-12 py-7 h-auto bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-lg shadow-blue-500/30 transition-all duration-300 group"
-          >
-            <Zap className="h-6 w-6 mr-2 text-yellow-300 group-hover:scale-110 transition-transform duration-300" />
-            Continue Learning Journey
-            <ArrowRight className="h-5 w-5 ml-2 group-hover:translate-x-1 transition-transform duration-300" />
-          </Button>
-        </div>
-      </main>
+        </main>
+
+        {/* Footer */}
+        <footer className="border-t border-slate-800/40 px-6 py-4 flex items-center justify-between text-xs text-slate-600">
+          <span>© 2024 AptitudeAI. Empowering talent through intelligence.</span>
+          <div className="flex items-center gap-4">
+            {["Privacy", "Terms", "Support"].map((l) => (
+              <button key={l} className="hover:text-slate-400 transition-colors">{l}</button>
+            ))}
+          </div>
+        </footer>
+      </div>
 
       <style>{`
         @keyframes slideUp {
-          from { opacity: 0; transform: translateY(20px); }
-          to { opacity: 1; transform: translateY(0); }
+          from { opacity: 0; transform: translateY(10px); }
+          to   { opacity: 1; transform: translateY(0);    }
         }
       `}</style>
     </div>
