@@ -8,6 +8,7 @@ import AdminDashboard from "./pages/AdminDashboard";
 import EmployabilityTestPage from "./pages/EmployabilityTestPage";
 import AuthPage from "./pages/AuthPage";
 import AssessmentPage from "./pages/Assessment";
+import GeminiReportPage from "./pages/GeminiReportPage";
 export default function App() {
   return (
  
@@ -21,6 +22,7 @@ export default function App() {
           <Route path="/progress" element={<ProgressPage />} />
           <Route path="/admin" element={<AdminDashboard />} />
           <Route path="/employability" element={<EmployabilityTestPage />} />
+          <Route path="/gemini-report" element={<GeminiReportPage />} />
         </Routes>
       </div>
 

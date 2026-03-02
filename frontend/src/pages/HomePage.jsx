@@ -209,7 +209,11 @@ export default function HomePage() {
 
         <style>{`
           @keyframes pulse { 0%, 100% { transform: scale(1); opacity: 0.15; } 50% { transform: scale(1.3); opacity: 0.3; } }
+<<<<<<< HEAD
+          @keyframes draw { 0% { stroke-dasharray: 0, 1000; } 100% { stroke-dasharray: 1000, 0; } }
+=======
           @keyframes draw  { 0% { stroke-dasharray: 0, 1000; } 100% { stroke-dasharray: 1000, 0; } }
+>>>>>>> 64c149d9a137d3b21625cb8a7ce2506e56cc28e3
         `}</style>
 
         <div className="relative z-10 text-center">
@@ -443,14 +447,17 @@ export default function HomePage() {
                   Expertly crafted test modules covering foundational to advanced scenarios required by top employers.
                 </p>
               </div>
+              {user && (
               <button
                 onClick={() => navigate("/progress")}
                 className="mt-6 md:mt-0 flex items-center gap-2 text-sm font-semibold text-blue-600 hover:text-blue-500 transition-colors"
               >
                 View Analytics <ArrowRight className="h-4 w-4" />
               </button>
+              )}
             </div>
             <AdaptiveDifficultySelector
+              isAuthenticated={!!user}
               selectedDifficulty={selectedDifficulty}
               onDifficultySelect={setSelectedDifficulty}
               onStartTest={handleStartTest}
@@ -487,7 +494,11 @@ export default function HomePage() {
                   ))}
                 </div>
                 <Button
-                  onClick={() => navigate("/progress")}
+                  type="button" // <--- ADD THIS
+                  onClick={(e) => { 
+                    e.preventDefault(); // <--- ADD THIS
+                    navigate("/gemini-report");
+                  }}
                   className="w-fit bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white px-6 py-4 h-auto rounded-xl text-sm font-semibold shadow-lg shadow-purple-500/30 flex items-center gap-2 transition-all duration-300 group"
                 >
                   <Sparkles className="w-4 h-4 group-hover:scale-110 transition-transform" /> Get Gemini Report

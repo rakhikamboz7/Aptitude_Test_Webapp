@@ -90,6 +90,8 @@ export const AuthProvider = ({ children }) => {
   // ─── Logout ───────────────────────────────────────────────────────────────
   const logout = () => {
     localStorage.removeItem("token")
+    localStorage.removeItem("progressHistory") // CLEAR GHOST DATA
+    localStorage.removeItem("quizResults")     // CLEAR GHOST DATA
     setToken(null)
     setUser(null)
     navigate("/auth")

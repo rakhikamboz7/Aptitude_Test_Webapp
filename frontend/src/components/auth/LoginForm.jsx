@@ -20,7 +20,6 @@ export const LoginForm = ({ onToggleMode }) => {
   const handleSubmit = async (e) => {
     e.preventDefault()
     setError("")
-
     if (!formData.email || !formData.password) {
       setError("Please fill in all fields")
       return
@@ -36,7 +35,6 @@ export const LoginForm = ({ onToggleMode }) => {
     <Card className="w-full max-w-md mx-auto bg-white/80 backdrop-blur-xl border border-slate-200 shadow-xl shadow-slate-200/50 relative overflow-hidden">
       {/* Decorative top gradient line */}
       <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-blue-600 to-sky-500" />
-
       <CardHeader className="text-center space-y-2 pb-6 pt-8">
         <div className="mx-auto w-12 h-12 bg-blue-50 border border-blue-100 rounded-2xl flex items-center justify-center mb-2 shadow-sm">
           <Sparkles className="h-6 w-6 text-blue-600" />
@@ -48,7 +46,6 @@ export const LoginForm = ({ onToggleMode }) => {
           Sign in to your account to continue your learning journey
         </CardDescription>
       </CardHeader>
-
       <CardContent className="px-8 pb-8">
         <form onSubmit={handleSubmit} className="space-y-5">
           {error && (

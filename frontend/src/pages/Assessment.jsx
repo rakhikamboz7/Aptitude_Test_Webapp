@@ -8,7 +8,7 @@ import {
   CheckCircle2, Clock, FileText, Plus, Search,
   TrendingUp, Award, ChevronDown, ChevronRight,
   ArrowRight, Trophy, Eye, Calendar, RefreshCw,
-  Building2, Edit,
+  Building2, Edit, Globe, LayoutGrid, Package, Smartphone, Users
 } from "lucide-react"
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000"
@@ -57,6 +57,7 @@ export default function AssessmentsPage() {
         timeSpent:      a.totalTime           ?? 0,
         status:         a.status,
         createdAt:      a.createdAt,
+        feedback:       a.feedback,
         badge: a.badge?.level ? {
           level:   a.badge.level,
           color:   a.badge.color,
@@ -156,14 +157,18 @@ export default function AssessmentsPage() {
   const grouped = groupByDate(filteredAssessments)
 
   // ─── Loading ─────────────────────────────────────────────────────────────────
+  // ─── Loading ─────────────────────────────────────────────────────────────────
   if (isLoading) return (
-    <div className="min-h-screen bg-slate-50 flex items-center justify-center">
-      <div className="text-center">
-        <div className="w-16 h-16 mx-auto mb-4 relative">
-          <div className="absolute inset-0 border-4 border-blue-200 rounded-full" />
-          <div className="absolute inset-0 border-4 border-blue-600 rounded-full border-t-transparent animate-spin" />
+    <div className="min-h-screen bg-slate-50 font-sans flex flex-col">
+      <Navigation />
+      <div className="flex-1 flex items-center justify-center pt-20">
+        <div className="text-center">
+          <div className="w-16 h-16 mx-auto mb-4 relative">
+            <div className="absolute inset-0 border-4 border-blue-200 rounded-full" />
+            <div className="absolute inset-0 border-4 border-blue-600 rounded-full border-t-transparent animate-spin" />
+          </div>
+          <p className="text-slate-600 text-lg font-medium">Loading assessments...</p>
         </div>
-        <p className="text-slate-600 text-lg font-medium">Loading assessments...</p>
       </div>
     </div>
   )
@@ -186,12 +191,13 @@ export default function AssessmentsPage() {
   // ─── Main Render ──────────────────────────────────────────────────────────────
   return (
     <div className="min-h-screen bg-slate-50 relative overflow-hidden font-sans">
-
       {/* Light Theme Gradient Orbs */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none" style={{ zIndex: 0 }}>
         <div className="absolute -top-40 -right-40 w-96 h-96 bg-gradient-to-br from-blue-300/30 to-cyan-300/30 rounded-full blur-3xl" />
         <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-gradient-to-br from-sky-300/30 to-blue-400/30 rounded-full blur-3xl" />
       </div>
+      
+      <Navigation />
 
       <Navigation />
 
@@ -370,12 +376,16 @@ function AssessmentCard({ assessment, index, statusCfg, diffCfg, formatDate, for
     assessment.score >= 80 ? "from-emerald-400 to-teal-500" :
     assessment.score >= 60 ? "from-blue-400 to-sky-500"     : "from-amber-400 to-orange-500"
 
-  const emoji =
-    assessment.company === "google"    ? "🔍" :
-    assessment.company === "microsoft" ? "🪟" :
-    assessment.company === "amazon"    ? "📦" :
-    assessment.company === "apple"     ? "🍎" :
-    assessment.company === "meta"      ? "👥" : "🏢"
+  const getCompanyIcon = (company) => {
+    switch (company) {
+      case "google": return <Globe className="h-6 w-6 text-blue-500" />;
+      case "microsoft": return <LayoutGrid className="h-6 w-6 text-blue-600" />;
+      case "amazon": return <Package className="h-6 w-6 text-slate-700" />;
+      case "apple": return <Smartphone className="h-6 w-6 text-slate-800" />;
+      case "meta": return <Users className="h-6 w-6 text-blue-600" />;
+      default: return <Building2 className="h-6 w-6 text-slate-500" />;
+    }
+  }
 
   return (
     <Card
@@ -392,7 +402,7 @@ function AssessmentCard({ assessment, index, statusCfg, diffCfg, formatDate, for
           <div className="flex-1">
             <div className="flex items-start gap-4 mb-4">
               <div className="w-12 h-12 bg-slate-100 border border-slate-200 rounded-xl flex items-center justify-center text-2xl flex-shrink-0 group-hover:bg-white group-hover:border-blue-100 transition-colors">
-                {emoji}
+                {getCompanyIcon(assessment.company)}
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex flex-wrap items-center gap-2 mb-1">
@@ -466,7 +476,10 @@ function AssessmentCard({ assessment, index, statusCfg, diffCfg, formatDate, for
               <Button
                 variant="outline"
                 className="bg-white text-slate-700 border-slate-200 hover:bg-slate-50 hover:text-blue-600 hover:border-blue-200 transition-colors"
-                onClick={(e) => { e.stopPropagation(); navigate("/results") }}
+                onClick={(e) => { e.stopPropagation(); 
+                  localStorage.setItem("quizResults", JSON.stringify(assessment));
+                  navigate("/results");
+                 }}
               >
                 <Eye className="h-4 w-4 mr-2" /> View Results
               </Button>
