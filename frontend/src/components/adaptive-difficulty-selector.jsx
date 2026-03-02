@@ -3,83 +3,98 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/
 import { Badge } from "./ui/badge"
 import { Button } from "./ui/button"
 import { TrendingUp, Target, Brain, Lightbulb, Zap, Award, CheckCircle2, Compass, Activity, Rocket, ArrowRight } from "lucide-react"
-
-export function AdaptiveDifficultySelector({ onDifficultySelect, selectedDifficulty, onStartTest }) {
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000"
+export function AdaptiveDifficultySelector({ onDifficultySelect, selectedDifficulty, onStartTest, isAuthenticated }) {
   const [progressData, setProgressData] = useState(null)
   const [showRecommendation, setShowRecommendation] = useState(false)
 
   useEffect(() => {
-    const analyzeProgress = () => {
+    const analyzeProgress = async () => {
       try {
-        const progressHistory = JSON.parse(localStorage.getItem("progressHistory") || "[]")
+        let progressHistory = []
+
+        // 2. If logged in, fetch from database!
+        if (isAuthenticated) {
+          const token = localStorage.getItem("token")
+          const res = await fetch(`${API_URL}/api/dashboard/summary`, {
+              headers: { Authorization: `Bearer ${token}` }
+            })
+          const data = await res.json()
+          if (data.success && data.summary) {
+            progressHistory = data.summary.progressHistory || []
+            // Sync it back to local storage just in case
+            localStorage.setItem("progressHistory", JSON.stringify(progressHistory))
+          }
+        } else {
+          // Fallback if not logged in
+          progressHistory = JSON.parse(localStorage.getItem("progressHistory") || "[]")
+        }
 
         if (progressHistory.length === 0) {
-          setProgressData(null)
-          return
-        }
-
-        // Calculate average score from recent tests (last 3)
-        const recentTests = progressHistory.slice(0, 3)
-        const averageScore = Math.round(recentTests.reduce((sum, test) => sum + test.score, 0) / recentTests.length)
-
-        // Determine trend
-        let recentTrend = "stable"
-        if (progressHistory.length >= 3) {
-          const lastScore = progressHistory[0].score
-          const thirdLastScore = progressHistory[2].score
-          if (lastScore > thirdLastScore + 10) recentTrend = "improving"
-          else if (lastScore < thirdLastScore - 10) recentTrend = "declining"
-        }
-
-        // Analyze topic performance
-        const topicStats = {}
-        recentTests.forEach((test) => {
-          Object.entries(test.breakdown.byTopic).forEach(([topic, data]) => {
-            if (!topicStats[topic]) {
-              topicStats[topic] = { correct: 0, total: 0, accuracy: 0 }
-            }
-            topicStats[topic].correct += data.correct
-            topicStats[topic].total += data.total
-          })
-        })
-
-        // Calculate accuracy for each topic
-        Object.keys(topicStats).forEach((topic) => {
-          topicStats[topic].accuracy = Math.round((topicStats[topic].correct / topicStats[topic].total) * 100)
-        })
-
-        const sortedTopics = Object.entries(topicStats).sort(([, a], [, b]) => b.accuracy - a.accuracy)
-        const strongTopics = sortedTopics.slice(0, 2).map(([topic]) => topic)
-        const weakTopics = sortedTopics.slice(-2).map(([topic]) => topic)
-
-        // Recommend difficulty based on performance
-        let recommendedDifficulty = "medium"
-        const lastTest = progressHistory[0]
-
-        if (averageScore >= 75 && recentTrend !== "declining") {
-          if (lastTest.difficulty === "easy") recommendedDifficulty = "medium"
-          else if (lastTest.difficulty === "medium") recommendedDifficulty = "hard"
-          else recommendedDifficulty = "hard"
-        } else if (averageScore < 40 || recentTrend === "declining") {
-          if (lastTest.difficulty === "hard") recommendedDifficulty = "medium"
-          else if (lastTest.difficulty === "medium") recommendedDifficulty = "easy"
-          else recommendedDifficulty = "easy"
+          setProgressData({ isEmpty: true })
+          // Removed the early return so the rest of the component still renders!
         } else {
-          recommendedDifficulty = lastTest.difficulty || "medium"
-        }
+          // Wrap the rest of the calculations inside this 'else' block
+          // Calculate average score from recent tests (last 3)
+          const recentTests = progressHistory.slice(0, 3)
+          const averageScore = Math.round(recentTests.reduce((sum, test) => sum + test.score, 0) / recentTests.length)
 
-        setProgressData({
-          averageScore,
-          recentTrend,
-          strongTopics,
-          weakTopics,
-          recommendedDifficulty,
-        })
+          // Determine trend
+          let recentTrend = "stable"
+          if (progressHistory.length >= 3) {
+            const lastScore = progressHistory[0].score
+            const thirdLastScore = progressHistory[2].score
+            if (lastScore > thirdLastScore + 10) recentTrend = "improving"
+            else if (lastScore < thirdLastScore - 10) recentTrend = "declining"
+          }
 
-        // Auto-select recommended difficulty if different from current
-        if (recommendedDifficulty !== selectedDifficulty) {
+          // Analyze topic performance
+          const topicStats = {}
+          recentTests.forEach((test) => {
+            Object.entries(test.breakdown?.byTopic || {}).forEach(([topic, data]) => {
+              if (!topicStats[topic]) {
+                topicStats[topic] = { correct: 0, total: 0, accuracy: 0 }
+              }
+              topicStats[topic].correct += data.correct
+              topicStats[topic].total += data.total
+            })
+          })
+
+          // Calculate accuracy for each topic
+          Object.keys(topicStats).forEach((topic) => {
+            topicStats[topic].accuracy = Math.round((topicStats[topic].correct / topicStats[topic].total) * 100)
+          })
+
+          const sortedTopics = Object.entries(topicStats).sort(([, a], [, b]) => b.accuracy - a.accuracy)
+          const strongTopics = sortedTopics.slice(0, 2).map(([topic]) => topic)
+          const weakTopics = sortedTopics.slice(-2).map(([topic]) => topic)
+
+          // Recommend difficulty based on performance
+          let recommendedDifficulty = "medium"
+          const lastTest = progressHistory[0]
+
+          if (averageScore >= 75 && recentTrend !== "declining") {
+            if (lastTest.difficulty === "easy") recommendedDifficulty = "medium"
+            else if (lastTest.difficulty === "medium") recommendedDifficulty = "hard"
+            else recommendedDifficulty = "hard"
+          } else if (averageScore < 40 || recentTrend === "declining") {
+            if (lastTest.difficulty === "hard") recommendedDifficulty = "medium"
+            else if (lastTest.difficulty === "medium") recommendedDifficulty = "easy"
+            else recommendedDifficulty = "easy"
+          } else {
+            recommendedDifficulty = lastTest.difficulty || "medium"
+          }
+
+          setProgressData({
+            averageScore,
+            recentTrend,
+            strongTopics,
+            weakTopics,
+            recommendedDifficulty,
+          })
+
           setShowRecommendation(true)
-        }
+        } // End of the 'else' block
       } catch (error) {
         console.error("Error analyzing progress:", error)
         setProgressData(null)
@@ -87,8 +102,7 @@ export function AdaptiveDifficultySelector({ onDifficultySelect, selectedDifficu
     }
 
     analyzeProgress()
-  }, [selectedDifficulty])
-
+  }, [selectedDifficulty, isAuthenticated]) // Ensure isAuthenticated is in the dependency array!
   const difficultyLevels = [
     {
       level: "easy",
@@ -148,7 +162,21 @@ export function AdaptiveDifficultySelector({ onDifficultySelect, selectedDifficu
   return (
     <div className="space-y-6">
       {/* AI Recommendation Card */}
-      {progressData && showRecommendation && (
+      {/* AI Locked State (Shows when user has 0 tests) */}
+      {isAuthenticated && progressData?.isEmpty && (
+        <Card className="bg-slate-50 border-slate-200 border-dashed shadow-sm overflow-hidden rounded-2xl mb-6">
+          <CardContent className="p-8 text-center">
+            <div className="w-14 h-14 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Brain className="h-6 w-6 text-slate-400" />
+            </div>
+            <h3 className="text-lg font-bold text-slate-900 mb-1">AI Insights Locked</h3>
+            <p className="text-sm text-slate-500 font-medium">Complete your first assessment to unlock personalized Gemini recommendations.</p>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* AI Recommendation Card (Shows when user has test history) */}
+      {isAuthenticated && progressData && !progressData.isEmpty && showRecommendation && (
         <Card className="bg-blue-50/80 border-blue-100 shadow-sm overflow-hidden relative group animate-slide-down rounded-2xl">
           <CardHeader className="relative z-10 pb-4">
             <div className="flex items-start justify-between">
@@ -256,7 +284,7 @@ export function AdaptiveDifficultySelector({ onDifficultySelect, selectedDifficu
       )}
 
       {/* Progress Summary */}
-      {progressData && (
+      {isAuthenticated && progressData && !progressData.isEmpty && (
         <Card className="bg-slate-100 border border-slate-200 shadow-sm overflow-hidden relative group rounded-2xl">
           <CardHeader className="relative z-10 pb-4">
             <div className="flex items-center gap-3">

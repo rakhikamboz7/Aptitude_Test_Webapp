@@ -6,12 +6,13 @@ import { useNavigate } from "react-router-dom"
 import { Button } from "../components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "../components/ui/card"
 import { Badge } from "../components/ui/badge"
+import { Navigation } from "../components/navigation"
 import {
   TrendingUp, TrendingDown, Clock, BookOpen, BarChart3,
   Trophy, Target, Brain, Sparkles, Award, Building2, Zap,
   ArrowRight, Activity, Flame, LogOut, User, CheckCircle2,
   Lock, Play, MessageSquare, ChevronRight, Bell, Settings,
-  FileText, Map, LayoutDashboard, Minus,
+  FileText, Map, LayoutDashboard, Minus,Globe, LayoutGrid, Package, Smartphone, Users,Building
 } from "lucide-react"
 import { useAuth } from "../contexts/auth-context"
 
@@ -96,9 +97,9 @@ export default function ProgressPage() {
     // y-axis lines
     ;[25, 50, 75, 100].forEach((v) => {
       const y = p.t + cH - (v / 100) * cH
-      ctx.strokeStyle = "#1e293b"; ctx.lineWidth = 1
+      ctx.strokeStyle = "#e2e8f0"; ctx.lineWidth = 1
       ctx.beginPath(); ctx.moveTo(p.l, y); ctx.lineTo(W - p.r, y); ctx.stroke()
-      ctx.fillStyle = "#475569"; ctx.font = "9px system-ui"; ctx.textAlign = "right"
+      ctx.fillStyle = "black"; ctx.font = "9px system-ui"; ctx.textAlign = "right"
       ctx.fillText(`${v}`, p.l - 4, y + 3)
     })
 
@@ -127,7 +128,7 @@ export default function ProgressPage() {
       ctx.beginPath(); ctx.arc(pt.x, pt.y, 4, 0, Math.PI * 2)
       ctx.fillStyle = "#06b6d4"; ctx.fill()
       ctx.strokeStyle = "#0f172a"; ctx.lineWidth = 2; ctx.stroke()
-      ctx.fillStyle = "#94a3b8"; ctx.font = "9px system-ui"; ctx.textAlign = "center"
+      ctx.fillStyle = "black"; ctx.font = "9px system-ui"; ctx.textAlign = "center"
       ctx.fillText(`Test ${i + 1}`, pt.x, H - p.b + 16)
     })
   }, [progressData])
@@ -140,6 +141,11 @@ export default function ProgressPage() {
   const labelColor = (l) => l === "Exceptional" ? "text-emerald-400" : l === "Improved" ? "text-cyan-400" : l === "Steady" ? "text-blue-400" : "text-amber-400"
 
   const streak = Math.min(progressData.length, 6)
+
+  // Calculate dynamic greeting
+  const currentHour = new Date().getHours()
+  const greeting = currentHour < 12 ? "Good morning" : currentHour < 18 ? "Good afternoon" : "Good evening"
+  const firstName = user?.name?.split(" ")[0] || "Student"
 
   // Learning path from topic stats or fallback
   const topicEntries  = stats?.topicStats ? Object.entries(stats.topicStats).sort(([,a],[,b]) => b.accuracy - a.accuracy) : []
@@ -159,55 +165,62 @@ export default function ProgressPage() {
       ]
 
   // ─── Loading / Empty ───────────────────────────────────────────────────────
+  // ─── Loading / Empty ───────────────────────────────────────────────────────
   if (loading) return (
-    <div className="min-h-screen bg-slate-950 flex items-center justify-center">
-      <div className="w-14 h-14 relative">
-        <div className="absolute inset-0 border-4 border-cyan-600/25 rounded-full" />
-        <div className="absolute inset-0 border-4 border-cyan-500 rounded-full border-t-transparent animate-spin" />
+    <div className="min-h-screen bg-slate-50 font-sans flex flex-col">
+      <Navigation />
+      <div className="flex-1 flex items-center justify-center pt-20">
+        <div className="w-16 h-16 relative">
+          <div className="absolute inset-0 border-4 border-blue-200 rounded-full" />
+          <div className="absolute inset-0 border-4 border-blue-600 rounded-full border-t-transparent animate-spin" />
+        </div>
       </div>
     </div>
   )
 
   if (!progressData.length) return (
-    <div className="min-h-screen bg-slate-950 flex items-center justify-center px-4">
-      <Card className="max-w-md text-center bg-slate-900/60 border-slate-800/50 shadow-2xl">
-        <CardHeader>
-          <div className="p-5 bg-cyan-500/10 rounded-full w-fit mx-auto mb-3 border border-cyan-500/20">
-            <BarChart3 className="h-12 w-12 text-cyan-400" />
-          </div>
-          <CardTitle className="text-2xl text-white">Start Your Journey</CardTitle>
-          <CardDescription className="text-slate-400 mt-1">Complete your first assessment to unlock analytics</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Button onClick={() => navigate("/")} className="w-full bg-gradient-to-r from-cyan-500 to-blue-600 text-white font-semibold" size="lg">
-            <Brain className="h-4 w-4 mr-2" /> Take First Assessment
-          </Button>
-        </CardContent>
-      </Card>
+    <div className="min-h-screen bg-slate-50 flex flex-col font-sans">
+      <Navigation />
+      <div className="flex-1 flex items-center justify-center px-4 pt-20">
+        <Card className="max-w-md w-full text-center bg-white border-slate-200 shadow-xl rounded-2xl">
+          <CardHeader>
+            <div className="p-5 bg-blue-50 rounded-full w-fit mx-auto mb-3 border border-blue-100">
+              <BarChart3 className="h-12 w-12 text-blue-600" />
+            </div>
+            <CardTitle className="text-2xl text-slate-900">Start Your Journey</CardTitle>
+            <CardDescription className="text-slate-500 mt-1 font-medium">Complete your first assessment to unlock analytics</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Button onClick={() => navigate("/auth")} className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold shadow-md rounded-xl" size="lg">
+              <Brain className="h-4 w-4 mr-2" /> Take First Assessment
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   )
 
   // ─── Main Render ───────────────────────────────────────────────────────────
   return (
-    <div className="min-h-screen bg-slate-950 flex" style={{ fontFamily: "'DM Sans', system-ui, sans-serif" }}>
+    <div className="min-h-screen bg-slate-50 font-sans flex flex-col">
+      <Navigation />
+      <div className="flex flex-1 pt-20">
 
       {/* ═══ SIDEBAR ══════════════════════════════════════════════════════════ */}
-      <aside className="hidden lg:flex flex-col w-52 bg-slate-900/90 border-r border-slate-800/60 fixed h-full z-20 backdrop-blur-xl">
+      <aside className="hidden lg:flex flex-col w-52 bg-white border-r border-slate-200 fixed top-20 bottom-0 left-0 z-20">
         <div className="px-5 py-4 border-b border-slate-800/60">
-          <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-widest">Student Portal</p>
+          <p className="text-[11px] font-semibold text-slate-700 uppercase tracking-widest">Student Portal</p>
         </div>
         <nav className="flex-1 px-3 py-4 space-y-0.5">
           {[
             { id: "dashboard", icon: LayoutDashboard, label: "Dashboard",    path: "/progress"    },
-            { id: "tests",     icon: FileText,         label: "My Tests",     path: "/assessments" },
-            { id: "learning",  icon: Map,              label: "Learning Path",path: "/"            },
-            { id: "settings",  icon: Settings,         label: "Settings",     path: "/"            },
+            { id: "tests",     icon: FileText,         label: "My Tests",     path: "/assessments" }
           ].map(({ id, label, path }) => (
             <button
               key={id}
               onClick={() => { setActiveNav(id); navigate(path) }}
               className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all ${
-                activeNav === id ? "bg-slate-800 text-white" : "text-slate-400 hover:text-white hover:bg-slate-800/50"
+                activeNav === id ? "bg-blue-50 text-blue-700" : "text-slate-600 hover:text-blue-600 hover:bg-slate-50"
               }`}
             >
               {label}
@@ -217,7 +230,7 @@ export default function ProgressPage() {
         <div className="px-3 pb-5 border-t border-slate-800/50 pt-3">
           <button
             onClick={logout}
-            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-slate-400 hover:text-red-400 hover:bg-red-500/10 transition-all"
+            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-slate-600 hover:text-red-600 hover:bg-red-50 transition-all"
           >
             <LogOut className="h-4 w-4" /> Logout
           </button>
@@ -227,35 +240,7 @@ export default function ProgressPage() {
       {/* ═══ MAIN CONTENT ═════════════════════════════════════════════════════ */}
       <div className="flex-1 lg:ml-52 flex flex-col min-h-screen">
 
-        {/* Top bar */}
-        <header className="sticky top-0 z-10 flex items-center justify-between px-6 py-3.5 bg-slate-950/85 backdrop-blur-xl border-b border-slate-800/40">
-          <div className="flex items-center gap-2.5">
-            <div className="p-1.5 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-lg shadow-lg shadow-cyan-500/20">
-              <Brain className="h-4.5 w-4.5 text-white" style={{ height: "18px", width: "18px" }} />
-            </div>
-            <span className="text-base font-bold text-white tracking-tight">
-              Aptitude<span className="text-cyan-400">AI</span>
-            </span>
-          </div>
-          <div className="flex items-center gap-2.5">
-            <button className="relative p-2 text-slate-400 hover:text-white transition-colors rounded-lg hover:bg-slate-800/50">
-              <Bell className="h-5 w-5" />
-              <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 bg-cyan-400 rounded-full" />
-            </button>
-            {streak > 0 && (
-              <div className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-500/10 border border-amber-500/30 rounded-full">
-                <Flame className="h-3.5 w-3.5 text-amber-400" />
-                <span className="text-xs font-bold text-amber-300">{streak} Days</span>
-              </div>
-            )}
-            <button
-              onClick={() => navigate("/")}
-              className="w-8 h-8 rounded-full bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center text-white text-sm font-bold shadow-lg"
-            >
-              {user?.name?.[0]?.toUpperCase() || "U"}
-            </button>
-          </div>
-        </header>
+        
 
         {/* Page content */}
         <main className="flex-1 px-6 py-7 w-full max-w-7xl mx-auto">
@@ -263,14 +248,14 @@ export default function ProgressPage() {
           {/* Page heading + streak */}
           <div className="flex items-start justify-between mb-7">
             <div>
-              <h1 className="text-xl font-bold text-white">Student Dashboard</h1>
-              <p className="text-slate-400 text-sm mt-0.5">Track your growth and master your employability skills.</p>
+              <h1 className="text-2xl font-bold text-slate-900">{greeting}, {firstName}!</h1>
+              <p className="text-slate-500 text-sm mt-0.5">Welcome to your dashboard. Track your growth and master your skills.</p>
             </div>
             {streak > 0 && (
-              <div className="hidden sm:flex items-center gap-2 text-sm text-slate-400">
+              <div className="hidden sm:flex items-center gap-2 text-sm text-slate-500">
                 Current Streak:
-                <span className="flex items-center gap-1 px-2.5 py-1 bg-amber-500/10 border border-amber-500/30 rounded-full text-amber-300 font-semibold text-xs">
-                  <Flame className="h-3 w-3 text-amber-400" /> {streak} Days
+                <span className="flex items-center gap-1 px-2.5 py-1 bg-amber-500/10 border border-amber-500/30 rounded-full text-slate-600 font-semibold text-xs">
+                  <Flame className="h-3 w-3 text-amber-900" /> {streak} Days
                 </span>
               </div>
             )}
@@ -280,11 +265,12 @@ export default function ProgressPage() {
           <div className="grid grid-cols-1 lg:grid-cols-5 gap-5 mb-5">
 
             {/* Hero readiness card */}
-            <Card className="lg:col-span-3 border-0 overflow-hidden relative bg-transparent">
-              <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-cyan-950/70 via-slate-900 to-blue-950/60 border border-cyan-800/25" />
+            <Card className="lg:col-span-3 bg-white border border-slate-200 shadow-sm rounded-2xl overflow-hidden relative">
+
+              
               <div className="absolute right-0 top-0 w-56 h-56 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none" />
               <CardContent className="relative z-10 p-6">
-                <p className="text-[11px] font-bold text-cyan-400 uppercase tracking-widest mb-3 flex items-center gap-1.5">
+                <p className="text-[11px] font-bold text-cyan-700 uppercase tracking-widest mb-3 flex items-center gap-1.5">
                   <TrendingUp className="h-3 w-3" />
                   {stats?.trend === "improving" ? "+Progress from last week" : "Performance overview"}
                 </p>
@@ -292,7 +278,7 @@ export default function ProgressPage() {
                   {/* SVG Gauge */}
                   <div className="flex-shrink-0">
                     <svg width="108" height="108" viewBox="0 0 108 108">
-                      <circle cx="54" cy="54" r="43" fill="none" stroke="#1e3a4a" strokeWidth="10" />
+                      <circle cx="54" cy="54" r="43" fill="none" stroke="#f1f5f9" strokeWidth="10" />
                       <circle
                         cx="54" cy="54" r="43"
                         fill="none"
@@ -309,31 +295,31 @@ export default function ProgressPage() {
                           <stop offset="100%" stopColor="#3b82f6" />
                         </linearGradient>
                       </defs>
-                      <text x="54" y="50" textAnchor="middle" fill="white" fontSize="19" fontWeight="bold">{stats?.averageScore || 0}%</text>
+                      <text x="54" y="50" textAnchor="middle" fill="#0f172a" fontSize="19" fontWeight="bold">{stats?.averageScore || 0}%</text>
                       <text x="54" y="64" textAnchor="middle" fill="#64748b" fontSize="8.5" fontWeight="600">READY</text>
                     </svg>
                   </div>
                   <div className="flex-1 min-w-0">
-                    <h2 className="text-xl font-bold text-white mb-1.5">
+                    <h2 className="text-xl font-bold text-slate-900 mb-1.5">
                       Looking sharp,{" "}
-                      <span className="text-cyan-400">{user?.name?.split(" ")[0] || "Student"}!</span>
+                      <span className="text-cyan-500">{user?.name?.split(" ")[0] || "Student"}!</span>
                     </h2>
-                    <p className="text-slate-300 text-sm leading-relaxed mb-4">
+                    <p className="text-slate-600 text-sm leading-relaxed mb-4">
                       Your readiness score is in the{" "}
-                      <strong className="text-white">top {Math.max(5, 100 - (stats?.averageScore || 0) + 15)}%</strong>{" "}
+                      <strong className="text-slate-900">top {Math.max(5, 100 - (stats?.averageScore || 0) + 15)}%</strong>{" "}
                       for Software Engineering roles.
                       {topicEntries.length > 0 && (
-                        <> Focus on <strong className="text-cyan-300">
+                        <> Focus on <strong className="text-blue-700">
                           "{topicEntries[topicEntries.length - 1]?.[0]}"
                         </strong> to hit the next milestone.</>
                       )}
                     </p>
                     <Button
-                      onClick={() => navigate("/assessments")}
-                      className="bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold text-sm px-4 py-2 h-auto rounded-lg"
-                    >
-                      View Skill Breakdown
-                    </Button>
+  onClick={() => navigate("/assessments")}
+  className="bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm px-4 py-2 h-auto rounded-lg shadow-sm"
+>
+  View Skill Breakdown
+</Button>
                   </div>
                 </div>
               </CardContent>
@@ -342,8 +328,8 @@ export default function ProgressPage() {
             {/* Growth Momentum */}
             <Card className="lg:col-span-2 bg-white/[0.03] border-slate-800/50">
               <CardHeader className="px-5 pt-5 pb-2">
-                <CardTitle className="text-sm font-semibold text-white">Growth Momentum</CardTitle>
-                <CardDescription className="text-xs text-slate-500">
+                <CardTitle className="text-sm font-semibold text-slate-900">Growth Momentum</CardTitle>
+                <CardDescription className="text-xs text-slate-700">
                   Performance over your last {Math.min(progressData.length, 5)} assessments
                 </CardDescription>
               </CardHeader>
@@ -361,15 +347,15 @@ export default function ProgressPage() {
               <CardHeader className="px-6 pt-5 pb-3">
                 <div className="flex items-center justify-between">
                   <div>
-                    <CardTitle className="text-sm font-semibold text-white">Your Learning Path</CardTitle>
+                    <CardTitle className="text-sm font-semibold text-slate-900">Your Learning Path</CardTitle>
                     <CardDescription className="text-xs text-slate-500 mt-0.5">Next missions tailored to your skill gaps</CardDescription>
                   </div>
                   <button
-                    onClick={() => navigate("/")}
-                    className="text-cyan-400 hover:text-cyan-300 text-xs font-semibold flex items-center gap-0.5 transition-colors"
-                  >
-                    View Full Map <ChevronRight className="h-3.5 w-3.5" />
-                  </button>
+  onClick={() => navigate("/")}
+  className="text-blue-600 hover:text-blue-800 text-xs font-bold flex items-center gap-0.5 transition-colors"
+>
+  View Full Map <ChevronRight className="h-3.5 w-3.5" />
+</button>
                 </div>
               </CardHeader>
               <CardContent className="px-6 pb-5">
@@ -382,8 +368,8 @@ export default function ProgressPage() {
                             <CheckCircle2 className="h-3.5 w-3.5 text-slate-500" />
                           </div>
                         ) : item.status === "active" ? (
-                          <div className="w-7 h-7 rounded-full bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center flex-shrink-0 shadow-md shadow-cyan-500/30">
-                            <Zap className="h-3.5 w-3.5 text-white" />
+                          <div className="w-7 h-7 rounded-full border-2 border-slate-700 flex items-center justify-center flex-shrink-0 ">
+                            <Zap className="h-3.5 w-3.5 text-slate-900" />
                           </div>
                         ) : (
                           <div className="w-7 h-7 rounded-full border-2 border-slate-800 flex items-center justify-center flex-shrink-0">
@@ -391,14 +377,14 @@ export default function ProgressPage() {
                           </div>
                         )}
                         <div>
-                          <p className={`text-sm font-semibold ${item.status === "locked" ? "text-slate-600" : "text-white"}`}>
+                          <p className={`text-sm font-semibold ${item.status === "locked" ? "text-slate-600" : "text-slate-900"}`}>
                             {item.label}
                           </p>
                           {item.detail && (
                             <p className="text-xs text-slate-500 mt-0.5">{item.detail}</p>
                           )}
                           {item.status === "active" && (
-                            <div className="mt-1.5 w-36 bg-slate-800 rounded-full h-1.5 overflow-hidden">
+                            <div className="mt-1.5 w-36 bg-slate-100 rounded-full h-1.5 overflow-hidden">
                               <div className="h-full bg-gradient-to-r from-cyan-500 to-blue-500 rounded-full" style={{ width: `${item.progress}%` }} />
                             </div>
                           )}
@@ -408,12 +394,12 @@ export default function ProgressPage() {
                         <span className="text-xs text-slate-600">{item.time}</span>
                         {item.status === "active" && (
                           <Button
-                            size="sm"
-                            onClick={() => navigate("/")}
-                            className="bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold text-xs h-7 px-3 rounded-lg"
-                          >
-                            Resume Mission
-                          </Button>
+  size="sm"
+  onClick={() => navigate("/")}
+  className="bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs h-8 px-4 rounded-lg shadow-sm"
+>
+  Resume Mission
+</Button>
                         )}
                       </div>
                     </div>
@@ -426,54 +412,37 @@ export default function ProgressPage() {
             <div className="lg:col-span-2 flex flex-col gap-4">
 
               {/* Resume Test */}
-              <Card className="bg-white/[0.03] border-slate-800/50 flex-1">
+              
+                <Card className="bg-white border border-slate-200 shadow-sm mb-5 rounded-2xl">
                 <CardContent className="p-5">
-                  <div className="w-8 h-8 rounded-xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center mb-3">
-                    <Play className="h-4 w-4 text-cyan-400" />
+                  <div className="w-8 h-8 rounded-xl bg-cyan-500/10 border border-cyan-500/10 flex items-center justify-center mb-3">
+                    <Play className="h-4 w-4 text-blue-600" />
                   </div>
-                  <h3 className="text-sm font-bold text-white mb-1">Resume Test</h3>
-                  <p className="text-xs text-slate-400 leading-relaxed mb-4">
+                  <h3 className="text-sm font-bold text-slate-900 mb-1">Resume Test</h3>
+                  <p className="text-xs text-slate-500 leading-relaxed mb-4">
                     Continue your latest assessment from where you left off.
                   </p>
                   <Button
-                    onClick={() => navigate("/")}
-                    className="w-full bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold text-sm h-9 rounded-xl flex items-center justify-center gap-2"
-                  >
-                    Start Now <ArrowRight className="h-3.5 w-3.5" />
-                  </Button>
+  onClick={() => navigate("/assessments")}
+  className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm h-10 rounded-xl flex items-center justify-center gap-2 shadow-sm"
+>
+  Start Now <ArrowRight className="h-4 w-4" />
+</Button>
                 </CardContent>
               </Card>
 
-              {/* AI Mock Interview */}
-              <Card className="bg-white/[0.03] border-slate-800/50 flex-1">
-                <CardContent className="p-5">
-                  <div className="w-8 h-8 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center mb-3">
-                    <MessageSquare className="h-4 w-4 text-amber-400" />
-                  </div>
-                  <h3 className="text-sm font-bold text-white mb-1">AI Mock Interview</h3>
-                  <p className="text-xs text-slate-400 leading-relaxed mb-4">
-                    Experience a real-time aptitude interview powered by AI.{" "}
-                    <span className="text-amber-400 font-medium">New feature</span>
-                  </p>
-                  <Button
-                    onClick={() => navigate("/employability")}
-                    className="w-full bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/35 text-amber-300 font-bold text-sm h-9 rounded-xl flex items-center justify-center gap-2"
-                  >
-                    Try Beta <ArrowRight className="h-3.5 w-3.5" />
-                  </Button>
-                </CardContent>
-              </Card>
+              
             </div>
           </div>
 
           {/* ── Row 3: Recent Test History (table style) ────────────────── */}
-          <Card className="bg-white/[0.03] border-slate-800/50 mb-5">
+          <Card className="bg-white border border-slate-200 shadow-sm mb-5 rounded-2xl">
             <CardHeader className="px-6 pt-5 pb-3">
               <div className="flex items-center justify-between">
-                <CardTitle className="text-sm font-semibold text-white">Recent Test History</CardTitle>
+                <CardTitle className="text-sm font-semibold text-slate-900">Recent Test History</CardTitle>
                 <button
                   onClick={() => navigate("/assessments")}
-                  className="text-cyan-400 hover:text-cyan-300 text-xs font-semibold transition-colors"
+                  className="text-blue-600  hover:text-cyan-300 text-xs font-bold transition-colors"
                 >
                   View All Results
                 </button>
@@ -498,7 +467,7 @@ export default function ProgressPage() {
                   return (
                     <div
                       key={i}
-                      className="grid gap-4 py-3.5 items-center hover:bg-slate-800/20 -mx-2 px-2 rounded-lg transition-colors group"
+                      className="grid gap-4 py-3.5 items-center hover:bg-slate-100/20 -mx-2 px-2 rounded-lg transition-colors group"
                       style={{
                         gridTemplateColumns: "2fr 1fr 0.7fr 0.8fr 1.2fr",
                         animation: `slideUp 0.4s ease-out ${i * 0.06}s backwards`,
@@ -506,24 +475,24 @@ export default function ProgressPage() {
                     >
                       {/* Category */}
                       <div className="flex items-center gap-3">
-                        <div className="w-7 h-7 rounded-lg bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center flex-shrink-0">
-                          <Brain className="h-3.5 w-3.5 text-cyan-400" />
+                        <div className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0">
+                          <Brain className="h-4 w-4 text-cyan-600" />
                         </div>
                         <div>
-                          <p className="text-sm font-semibold text-white capitalize leading-tight">
+                          <p className="text-sm font-semibold text-slate-900 capitalize leading-tight">
                             {test.company && test.company !== "general" ? `${test.company}: ` : "Aptitude: "}
                             {test.difficulty}
                           </p>
                           <p className="text-xs text-slate-600 capitalize">{test.difficulty} level</p>
                         </div>
                       </div>
-                      <span className="text-sm text-slate-400">{fmtDate(test.date || test.createdAt)}</span>
+                      <span className="text-sm text-slate-500">{fmtDate(test.date || test.createdAt)}</span>
                       <span className={`text-sm font-bold ${scoreColor(test.score)}`}>{test.score}%</span>
                       <span className={`text-sm font-semibold ${labelColor(status)}`}>{status}</span>
                       <div className="text-right">
                         <button
                           onClick={() => navigate("/results")}
-                          className="text-xs font-bold text-white hover:text-cyan-400 transition-colors"
+                          className="text-xs font-bold text-slate-900 hover:text-cyan-400 transition-colors"
                         >
                           Detailed Feedback
                         </button>
@@ -540,14 +509,14 @@ export default function ProgressPage() {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 mb-5">
 
               {Object.keys(stats.topicStats).length > 0 && (
-                <Card className="bg-white/[0.03] border-slate-800/50">
+                <Card className="bg-white border border-slate-200 shadow-sm mb-5 rounded-2xl">
                   <CardHeader className="px-5 pt-5 pb-3">
                     <div className="flex items-center gap-2.5">
-                      <div className="p-1.5 bg-gradient-to-br from-indigo-600 to-blue-700 rounded-lg">
-                        <BookOpen className="h-3.5 w-3.5 text-white" />
+                      <div className="p-1.5 ">
+                        <BookOpen className="h-4 w-4 text-indigo-700" />
                       </div>
                       <div>
-                        <CardTitle className="text-sm font-semibold text-white">Topic Mastery</CardTitle>
+                        <CardTitle className="text-sm font-semibold text-slate-900">Topic Mastery</CardTitle>
                         <CardDescription className="text-xs text-slate-500">Skills breakdown by area</CardDescription>
                       </div>
                     </div>
@@ -556,10 +525,10 @@ export default function ProgressPage() {
                     {Object.entries(stats.topicStats).sort(([,a],[,b]) => b.accuracy - a.accuracy).slice(0, 5).map(([topic, data]) => (
                       <div key={topic}>
                         <div className="flex justify-between mb-1">
-                          <span className="text-xs font-semibold text-white capitalize">{topic}</span>
+                          <span className="text-xs font-semibold text-slate-900 capitalize">{topic}</span>
                           <span className={`text-xs font-bold ${scoreColor(data.accuracy)}`}>{data.accuracy}%</span>
                         </div>
-                        <div className="w-full bg-slate-800/60 rounded-full h-1.5 overflow-hidden">
+                        <div className="w-full bg-slate-100/60 rounded-full h-1.5 overflow-hidden">
                           <div className={`h-full rounded-full bg-gradient-to-r ${barColor(data.accuracy)}`} style={{ width: `${data.accuracy}%` }} />
                         </div>
                         <p className="text-[11px] text-slate-600 mt-0.5">{data.correct}/{data.total} correct</p>
@@ -570,32 +539,42 @@ export default function ProgressPage() {
               )}
 
               {Object.keys(stats.companyStats).length > 0 && (
-                <Card className="bg-white/[0.03] border-slate-800/50">
+                <Card className="bg-white border border-slate-200 shadow-sm mb-5 rounded-2xl">
                   <CardHeader className="px-5 pt-5 pb-3">
                     <div className="flex items-center gap-2.5">
-                      <div className="p-1.5 bg-gradient-to-br from-blue-600 to-sky-600 rounded-lg">
-                        <Building2 className="h-3.5 w-3.5 text-white" />
+                      <div className="p-1.5 ">
+                        <Building2 className="h-5 w-5 text-indigo-800" />
                       </div>
                       <div>
-                        <CardTitle className="text-sm font-semibold text-white">Company Performance</CardTitle>
+                        <CardTitle className="text-sm font-semibold text-slate-900">Company Performance</CardTitle>
                         <CardDescription className="text-xs text-slate-500">Target-specific scores</CardDescription>
                       </div>
                     </div>
                   </CardHeader>
                   <CardContent className="px-5 pb-5 space-y-3.5">
                     {Object.entries(stats.companyStats).sort(([,a],[,b]) => b.avgScore - a.avgScore).map(([company, data]) => {
-                      const emoji = { google:"🔍", microsoft:"🪟", amazon:"📦", apple:"🍎", meta:"👥" }[company] || "🏢"
+                      const getCompanyIcon = (comp) => {
+                        switch (comp) {
+                          case "google": return <Globe className="h-4 w-4 text-blue-500" />;
+                          case "microsoft": return <LayoutGrid className="h-4 w-4 text-blue-600" />;
+                          case "amazon": return <Package className="h-4 w-4 text-slate-700" />;
+                          case "apple": return <Smartphone className="h-4 w-4 text-slate-800" />;
+                          case "meta": return <Users className="h-4 w-4 text-blue-600" />;
+                          default: return <Building className="h-4 w-4 text-slate-500" />;
+                        }
+                      };
+                      
                       return (
                         <div key={company}>
                           <div className="flex items-center justify-between mb-1">
                             <div className="flex items-center gap-2">
-                              <span className="text-sm">{emoji}</span>
-                              <span className="text-xs font-semibold text-white capitalize">{company === "general" ? "General" : company}</span>
+                              {getCompanyIcon(company)}
+                              <span className="text-xs font-semibold text-slate-900 capitalize">{company === "general" ? "General" : company}</span>
                               <span className="text-[11px] text-slate-600">{data.tests} tests</span>
                             </div>
                             <span className={`text-xs font-bold ${scoreColor(data.avgScore)}`}>{data.avgScore}%</span>
                           </div>
-                          <div className="w-full bg-slate-800/60 rounded-full h-1.5 overflow-hidden">
+                          <div className="w-full bg-slate-100/60 rounded-full h-1.5 overflow-hidden">
                             <div className={`h-full rounded-full bg-gradient-to-r ${barColor(data.avgScore)}`} style={{ width: `${data.avgScore}%` }} />
                           </div>
                         </div>
@@ -609,23 +588,40 @@ export default function ProgressPage() {
 
           {/* Badges row */}
           {badgeStats && (
-            <Card className="bg-white/[0.03] border-slate-800/50 mb-5">
+            <Card className="bg-white border border-slate-200 shadow-sm mb-5 rounded-2xl">
               <CardContent className="px-6 py-5">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2.5">
-                    <Trophy className="h-4 w-4 text-amber-400" />
-                    <span className="text-sm font-semibold text-white">Achievement Collection</span>
+                    <Trophy className="h-4.5 w-4.5 text-amber-400" />
+                    <span className="text-sm font-semibold text-slate-900">Achievement Collection</span>
                   </div>
-                  <div className="flex items-center gap-8">
+                  <div className="flex items-center gap-10">
                     {[
-                      { emoji: "🥉", count: badgeStats.beginner,     label: "Beginner"     },
-                      { emoji: "🥈", count: badgeStats.intermediate, label: "Intermediate" },
-                      { emoji: "🥇", count: badgeStats.advanced,     label: "Advanced"     },
-                    ].map(({ emoji, count, label }) => (
-                      <div key={label} className="text-center">
-                        <span className="text-xl">{emoji}</span>
-                        <div className="text-base font-bold text-white">{count}</div>
-                        <div className="text-[11px] text-slate-500">{label}</div>
+                      { 
+                        icon: <Award className="h-6 w-6 text-amber-600" />, 
+                        bg: "bg-amber-50 border-amber-100", 
+                        count: badgeStats.beginner,     
+                        label: "Beginner"     
+                      },
+                      { 
+                        icon: <Award className="h-6 w-6 text-slate-600" />, 
+                        bg: "bg-slate-50 border-slate-200", 
+                        count: badgeStats.intermediate, 
+                        label: "Intermediate" 
+                      },
+                      { 
+                        icon: <Trophy className="h-6 w-6 text-yellow-600" />, 
+                        bg: "bg-yellow-50 border-yellow-200", 
+                        count: badgeStats.advanced,     
+                        label: "Advanced"     
+                      },
+                    ].map(({ icon, bg, count, label }) => (
+                      <div key={label} className="text-center flex flex-col items-center">
+                        <div className={`w-12 h-12 rounded-full border flex items-center justify-center mb-2 shadow-sm ${bg}`}>
+                          {icon}
+                        </div>
+                        <div className="text-lg font-bold text-slate-900 leading-none mb-1">{count}</div>
+                        <div className="text-xs font-bold text-slate-500 uppercase tracking-wider">{label}</div>
                       </div>
                     ))}
                   </div>
@@ -641,7 +637,7 @@ export default function ProgressPage() {
           <span>© 2024 AptitudeAI. Empowering talent through intelligence.</span>
           <div className="flex items-center gap-4">
             {["Privacy", "Terms", "Support"].map((l) => (
-              <button key={l} className="hover:text-slate-400 transition-colors">{l}</button>
+              <button key={l} className="hover:text-slate-500 transition-colors">{l}</button>
             ))}
           </div>
         </footer>
@@ -653,6 +649,7 @@ export default function ProgressPage() {
           to   { opacity: 1; transform: translateY(0);    }
         }
       `}</style>
+    </div>
     </div>
   )
 }

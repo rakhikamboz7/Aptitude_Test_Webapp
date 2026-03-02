@@ -459,7 +459,7 @@ export default function QuizPage() {
 
         {/* Submit Confirmation Modal */}
         {showSubmitConfirm && (
-          <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 px-4">
+          <div className="fixed inset-0 bg-slate-100/50 backdrop-blur-sm flex items-center justify-center z-50 px-4">
             <Card className="max-w-md w-full shadow-2xl">
               <CardHeader>
                 <CardTitle className="text-xl">Submit Test Early?</CardTitle>

@@ -59,7 +59,7 @@ export default function ResultsPage() {
         textColor: "text-yellow-700",
         bgLight: "bg-yellow-50",
         borderColor: "border-yellow-200",
-        icon: "🥉",
+        icon: <Award className="h-10 w-10 text-amber-600" />,
         title: "Beginner Badge",
         description: "Great start on your learning journey!",
       },
@@ -68,7 +68,7 @@ export default function ResultsPage() {
         textColor: "text-blue-700",
         bgLight: "bg-blue-50",
         borderColor: "border-blue-200",
-        icon: "🥈",
+        icon: <Award className="h-10 w-10 text-slate-600" />,
         title: "Intermediate Badge",
         description: "Solid performance! You're progressing well!",
       },
@@ -77,7 +77,7 @@ export default function ResultsPage() {
         textColor: "text-purple-700",
         bgLight: "bg-purple-50",
         borderColor: "border-purple-200",
-        icon: "🥇",
+        icon: <Trophy className="h-10 w-10 text-yellow-600" />,
         title: "Advanced Badge",
         description: "Outstanding! You're mastering these concepts!",
       },
@@ -93,11 +93,11 @@ export default function ResultsPage() {
   }
 
   const getPerformanceMessage = (score) => {
-    if (score >= 90) return "Outstanding Performance! 🎉"
-    if (score >= 80) return "Excellent Work! 👏"
-    if (score >= 70) return "Good Job! 👍"
-    if (score >= 60) return "Fair Performance 📚"
-    return "Keep Practicing! 💪"
+    if (score >= 90) return "Outstanding Performance!"
+    if (score >= 80) return "Excellent Work!"
+    if (score >= 70) return "Good Job!"
+    if (score >= 60) return "Fair Performance"
+    return "Keep Practicing!"
   }
 
   if (isLoading) {
@@ -116,20 +116,22 @@ export default function ResultsPage() {
 
   if (!results) {
     return (
-      <div className="min-h-screen bg-background">
+      <div className="min-h-screen bg-slate-50 font-sans flex flex-col">
         <Navigation />
+        <div className="pt-24 flex-1 relative z-0">
         <div className="flex items-center justify-center min-h-[calc(100vh-4rem)] px-4">
           <Card className="max-w-md shadow-xl">
             <CardHeader>
               <CardTitle className="text-center">No Results Found</CardTitle>
             </CardHeader>
             <CardContent className="text-center">
-              <p className="text-muted-foreground mb-4">No quiz results were found. Please take a test first.</p>
+              <p className="text-slate-500 font-medium mb-4">No quiz results were found. Please take a test first.</p>
               <Button onClick={() => navigate("/")} className="w-full">
                 Start New Test
               </Button>
             </CardContent>
           </Card>
+        </div>
         </div>
       </div>
     )
@@ -139,40 +141,42 @@ export default function ResultsPage() {
   const badgeInfo = getBadgeInfo(badge)
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-slate-50 font-sans flex flex-col">
       <Navigation />
-
-      {/* Badge Celebration Banner */}
+      <div className="pt-28 flex-1 relative z-0">
+      {/* Badge Celebration Banner (Compact) */}
       {showBadgeCelebration && badge && (
-        <div className={`${badgeInfo.bgLight} border-b-2 ${badgeInfo.borderColor} py-6 px-4 animate-in slide-in-from-top`}>
-          <div className="max-w-4xl mx-auto text-center">
-            <div className="flex items-center justify-center space-x-3 mb-2">
-              <div className={`text-5xl ${badgeInfo.color} rounded-full p-4`}>
+        <div className={`${badgeInfo.bgLight} border-b ${badgeInfo.borderColor} py-2.5 px-4 shadow-sm animate-in slide-in-from-top z-10 relative`}>
+          <div className="max-w-6xl mx-auto flex items-center justify-between">
+            <div className="flex items-center space-x-3">
+              <div className="flex items-center justify-center w-8 h-8 bg-white rounded-full shadow-sm [&>svg]:w-4 [&>svg]:h-4">
                 {badgeInfo.icon}
               </div>
               <div className="text-left">
-                <h3 className={`text-2xl font-bold ${badgeInfo.textColor}`}>{badgeInfo.title} Earned!</h3>
-                <p className="text-muted-foreground">{badgeInfo.description}</p>
+                <p className={`text-sm font-bold ${badgeInfo.textColor} leading-tight`}>
+                   {badgeInfo.title} Earned! <span className="text-slate-600 font-medium ml-1 hidden sm:inline">— {badgeInfo.description}</span>
+                </p>
               </div>
             </div>
             <Button 
               variant="ghost" 
               size="sm" 
               onClick={() => setShowBadgeCelebration(false)}
-              className="mt-2"
+              className={`h-7 px-3 text-xs font-bold ${badgeInfo.textColor} hover:bg-white/60 transition-colors`}
             >
               Dismiss
             </Button>
           </div>
         </div>
       )}
+      </div>
 
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="text-center mb-8">
           <div className="flex items-center justify-center mb-4">
             <div className="p-4 bg-primary/10 rounded-full">
-              <Trophy className="h-12 w-12 text-primary" />
+              <Trophy className="h-10 w-10 text-blue-600" />
             </div>
           </div>
           <h1 className="text-4xl font-bold text-foreground mb-2">Assessment Results</h1>
@@ -187,7 +191,7 @@ export default function ResultsPage() {
 
         {/* Score Overview */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <Card className="text-center shadow-lg hover:shadow-xl transition-shadow">
+          <Card className="text-center bg-white border border-slate-200 shadow-sm rounded-2xl hover:shadow-md transition-shadow">
             <CardHeader className="pb-3">
               <CardTitle className="text-sm font-medium text-muted-foreground flex items-center justify-center">
                 <Target className="h-4 w-4 mr-2" />
@@ -202,7 +206,7 @@ export default function ResultsPage() {
             </CardContent>
           </Card>
 
-          <Card className="text-center shadow-lg hover:shadow-xl transition-shadow">
+          <Card className="text-center bg-white border border-slate-200 shadow-sm rounded-2xl hover:shadow-md transition-shadow">
             <CardHeader className="pb-3">
               <CardTitle className="text-sm font-medium text-muted-foreground flex items-center justify-center">
                 <CheckCircle2 className="h-4 w-4 mr-2" />
@@ -215,7 +219,7 @@ export default function ResultsPage() {
             </CardContent>
           </Card>
 
-          <Card className="text-center shadow-lg hover:shadow-xl transition-shadow">
+          <Card className="text-center bg-white border border-slate-200 shadow-sm rounded-2xl hover:shadow-md transition-shadow">
             <CardHeader className="pb-3">
               <CardTitle className="text-sm font-medium text-muted-foreground flex items-center justify-center">
                 <Clock className="h-4 w-4 mr-2" />
@@ -228,15 +232,15 @@ export default function ResultsPage() {
             </CardContent>
           </Card>
 
-          <Card className={`text-center shadow-lg hover:shadow-xl transition-shadow border-2 ${badgeInfo.borderColor} ${badgeInfo.bgLight}`}>
-            <CardHeader className="pb-3">
-              <CardTitle className={`text-sm font-medium flex items-center justify-center ${badgeInfo.textColor}`}>
+          <Card className="text-center bg-white border border-slate-200 shadow-sm rounded-2xl hover:shadow-md transition-shadow">
+            <CardHeader className="pb-3 pt-6">
+            <CardTitle className="text-xs font-bold uppercase tracking-wider text-slate-900 flex items-center justify-center">
                 <Award className="h-4 w-4 mr-2" />
                 Achievement
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-5xl mb-2">{badgeInfo.icon}</div>
+              <div className="flex justify-center mb-2">{badgeInfo.icon}</div>
               <p className={`text-sm font-semibold ${badgeInfo.textColor}`}>{badgeInfo.title}</p>
             </CardContent>
           </Card>
@@ -246,15 +250,15 @@ export default function ResultsPage() {
         {feedback && (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
             {/* Overall Summary */}
-            <Card className="shadow-lg">
+            <Card className="bg-white border border-slate-200 shadow-sm rounded-2xl">
               <CardHeader>
                 <CardTitle className="flex items-center space-x-2">
-                  <Brain className="h-5 w-5 text-primary" />
+                  <Brain className="h-5 w-5 text-blue-600" />
                   <span>AI Performance Analysis</span>
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-muted-foreground leading-relaxed mb-6 text-base">{feedback.overallSummary}</p>
+                <p className="text-slate-500 font-medium leading-relaxed mb-6 text-base">{feedback.overallSummary}</p>
                 <div className="space-y-6">
                   <div>
                     <h4 className="font-semibold text-green-600 mb-3 flex items-center text-lg">
@@ -289,7 +293,7 @@ export default function ResultsPage() {
             </Card>
 
             {/* Topic Breakdown */}
-            <Card className="shadow-lg">
+            <Card className="bg-white border border-slate-200 shadow-sm rounded-2xl">
               <CardHeader>
                 <CardTitle className="flex items-center space-x-2">
                   <BookOpen className="h-5 w-5 text-primary" />
@@ -368,7 +372,7 @@ export default function ResultsPage() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-muted-foreground mb-6 leading-relaxed text-lg">{feedback.motivationalMessage}</p>
+              <p className="text-slate-500 font-medium mb-6 leading-relaxed text-lg">{feedback.motivationalMessage}</p>
               {feedback.nextSteps && (
                 <div>
                   <h4 className="font-semibold mb-3 text-lg flex items-center">

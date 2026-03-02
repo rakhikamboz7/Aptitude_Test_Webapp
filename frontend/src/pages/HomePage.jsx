@@ -447,14 +447,17 @@ export default function HomePage() {
                   Expertly crafted test modules covering foundational to advanced scenarios required by top employers.
                 </p>
               </div>
+              {user && (
               <button
                 onClick={() => navigate("/progress")}
                 className="mt-6 md:mt-0 flex items-center gap-2 text-sm font-semibold text-blue-600 hover:text-blue-500 transition-colors"
               >
                 View Analytics <ArrowRight className="h-4 w-4" />
               </button>
+              )}
             </div>
             <AdaptiveDifficultySelector
+              isAuthenticated={!!user}
               selectedDifficulty={selectedDifficulty}
               onDifficultySelect={setSelectedDifficulty}
               onStartTest={handleStartTest}
@@ -491,7 +494,11 @@ export default function HomePage() {
                   ))}
                 </div>
                 <Button
-                  onClick={() => navigate("/progress")}
+                  type="button" // <--- ADD THIS
+                  onClick={(e) => { 
+                    e.preventDefault(); // <--- ADD THIS
+                    navigate("/gemini-report");
+                  }}
                   className="w-fit bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white px-6 py-4 h-auto rounded-xl text-sm font-semibold shadow-lg shadow-purple-500/30 flex items-center gap-2 transition-all duration-300 group"
                 >
                   <Sparkles className="w-4 h-4 group-hover:scale-110 transition-transform" /> Get Gemini Report
@@ -640,15 +647,6 @@ export default function HomePage() {
       </footer>
 
       <style>{`
-<<<<<<< HEAD
-        @keyframes shimmer { 0% { background-position: -1000px 0; } 100% { background-position: 1000px 0; } }
-        @keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
-        @keyframes slide-down { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
-        .animate-shimmer { background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent); background-size: 1000px 100%; animation: shimmer 2s infinite; }
-        .animate-fade-in { animation: fade-in 1s ease-out; }
-        .animate-slide-down { animation: slide-down 0.3s ease-out; }
-        .animate-scale-in { animation: scale-in 0.3s ease-out; }
-=======
         @keyframes shimmer    { 0% { background-position: -1000px 0; } 100% { background-position: 1000px 0; } }
         @keyframes fade-in    { from { opacity: 0; } to { opacity: 1; } }
         @keyframes slide-down { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
@@ -657,7 +655,6 @@ export default function HomePage() {
         .animate-fade-in    { animation: fade-in 1s ease-out; }
         .animate-slide-down { animation: slide-down 0.3s ease-out; }
         .animate-scale-in   { animation: scale-in 0.3s ease-out; }
->>>>>>> 64c149d9a137d3b21625cb8a7ce2506e56cc28e3
       `}</style>
     </div>
   )
