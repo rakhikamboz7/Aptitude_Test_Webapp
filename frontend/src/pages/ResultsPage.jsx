@@ -21,7 +21,12 @@ import {
   Zap,
   ArrowRight,
 } from "lucide-react"
-
+// ADD THIS FUNCTION HERE:
+const formatTime = (totalSeconds) => {
+  const m = Math.floor(totalSeconds / 60)
+  const s = totalSeconds % 60
+  return `${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`
+}
 export default function ResultsPage() {
   const navigate = useNavigate()
   const [results, setResults] = useState(null)
@@ -137,7 +142,11 @@ export default function ResultsPage() {
     )
   }
 
-  const { score, correctAnswers, totalQuestions, timeSpent, feedback, badge, company } = results
+  const { score, correctAnswers, totalQuestions, feedback, badge, company } = results
+  
+  // Check for both timeSpent (from history) and totalTime (from a fresh quiz)
+  const displayTime = results.timeSpent !== undefined ? results.timeSpent : (results.totalTime || 0)
+
   const badgeInfo = getBadgeInfo(badge)
 
   return (
@@ -227,8 +236,8 @@ export default function ResultsPage() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-5xl font-bold mb-2 text-blue-600">{timeSpent}</div>
-              <p className="text-sm text-muted-foreground">minutes</p>
+              <div className="text-5xl font-bold mb-2 text-blue-600">{formatTime(displayTime)}</div>
+              <p className="text-sm text-muted-foreground">mm : ss</p>
             </CardContent>
           </Card>
 

@@ -16,7 +16,9 @@ export const Navigation = () => {
     { path: "/progress", label: "Progress" },
     { path: "/employability", label: "Employability Test" },
   ]
-
+  // ADD THESE TWO LINES:
+  const localHistory = JSON.parse(localStorage.getItem("progressHistory") || "[]")
+  const totalTests = user?.statistics?.totalAssessments || localHistory.length
   return (
     <header className="fixed top-0 left-0 right-0 z-50 border-b border-slate-200 bg-white/80 backdrop-blur-xl">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
@@ -67,7 +69,7 @@ export const Navigation = () => {
                   </p>
                   <div className="flex items-center justify-end gap-1 text-xs text-slate-500">
                     <Trophy className="h-3 w-3 text-amber-500" />
-                    {user.statistics?.totalAssessments || 0} tests
+                    {totalTests} tests
                   </div>
                 </div>
                 
