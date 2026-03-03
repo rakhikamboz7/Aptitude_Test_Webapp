@@ -513,7 +513,7 @@ export default function HomePage() {
                     <div className="flex items-center gap-2 text-white font-bold text-xs tracking-wide">
                       <Sparkles className="w-3.5 h-3.5" /> GEMINI PERFORMANCE ANALYSIS
                     </div>
-                    <Badge className="bg-white/20 text-white border-none text-[8px] tracking-wider px-1.5 backdrop-blur-sm">GEMINI-1.5-PRO</Badge>
+                    <Badge className="bg-white/20 text-white border-none text-[8px] tracking-wider px-1.5 backdrop-blur-sm">GEMINI-2.5-PRO</Badge>
                   </div>
                   <div className="p-5 lg:p-6 space-y-6">
                     <div>

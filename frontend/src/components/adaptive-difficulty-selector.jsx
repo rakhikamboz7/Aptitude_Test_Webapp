@@ -102,7 +102,7 @@ export function AdaptiveDifficultySelector({ onDifficultySelect, selectedDifficu
     }
 
     analyzeProgress()
-  }, [selectedDifficulty, isAuthenticated]) // Ensure isAuthenticated is in the dependency array!
+  }, [isAuthenticated]) // Ensure isAuthenticated is in the dependency array!
   const difficultyLevels = [
     {
       level: "easy",
