@@ -157,14 +157,12 @@ export default function GeminiReportPage() {
                 {weaknesses.length > 0 ? (
                   <ul className="space-y-4">
                     {weaknesses.map(([topic, data]) => (
-                      <li key={topic} className="flex flex-col p-4 bg-amber-50 rounded-xl border border-amber-100">
+                      <li key={topic} className="flex flex-col p-3 bg-amber-50 rounded-xl border border-amber-100">
                         <div className="flex items-center justify-between mb-2">
                           <span className="font-bold text-slate-800 capitalize">{topic}</span>
                           <Badge className="bg-amber-100 text-amber-800 border-none">{data.accuracy}% Accuracy</Badge>
                         </div>
-                        <p className="text-xs text-amber-700 font-medium flex items-center gap-1">
-                           <Sparkles className="h-3 w-3" /> Gemini suggests foundational review.
-                        </p>
+                        
                       </li>
                     ))}
                   </ul>
