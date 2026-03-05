@@ -199,9 +199,22 @@ export default function ProgressPage() {
       </div>
     </div>
   )
+  // --- ADD THIS RIGHT BEFORE THE RETURN STATEMENT ---
+  const currentScore = stats?.averageScore || 0;
+  
+  // 1. Calculate dynamic greeting
+  let motivationalGreeting = "Every step counts";
+  if (currentScore >= 80) motivationalGreeting = "Outstanding work";
+  else if (currentScore >= 60) motivationalGreeting = "Great progress";
+  else if (currentScore >= 40) motivationalGreeting = "Almost there";
+
+  // 2. Fix the Top Percentage Math
+  const topPercentage = Math.max(1, 100 - currentScore);
+  // ------------------------------------------------
 
   // ─── Main Render ───────────────────────────────────────────────────────────
   return (
+    
     <div className="min-h-screen bg-slate-50 font-sans flex flex-col">
       <Navigation />
       <div className="flex flex-1 pt-20">
@@ -292,7 +305,7 @@ export default function ProgressPage() {
                       <defs>
                         <linearGradient id="cg" x1="0%" y1="0%" x2="100%" y2="0%">
                           <stop offset="0%" stopColor="#06b6d4" />
-                          <stop offset="100%" stopColor="#3b82f6" />
+                          <stop offset="100%" stopColor="#2b75f5" />
                         </linearGradient>
                       </defs>
                       <text x="54" y="50" textAnchor="middle" fill="#0f172a" fontSize="19" fontWeight="bold">{stats?.averageScore || 0}%</text>
@@ -301,15 +314,15 @@ export default function ProgressPage() {
                   </div>
                   <div className="flex-1 min-w-0">
                     <h2 className="text-xl font-bold text-slate-900 mb-1.5">
-                      Looking sharp,{" "}
+                      {motivationalGreeting},{" "}
                       <span className="text-cyan-500">{user?.name?.split(" ")[0] || "Student"}!</span>
                     </h2>
                     <p className="text-slate-600 text-sm leading-relaxed mb-4">
                       Your readiness score is in the{" "}
-                      <strong className="text-slate-900">top {Math.max(5, 100 - (stats?.averageScore || 0) + 15)}%</strong>{" "}
+                      <strong className="text-slate-900">top {topPercentage}%</strong>{" "}
                       for Software Engineering roles.
                       {topicEntries.length > 0 && (
-                        <> Focus on <strong className="text-blue-700">
+                        <> Focus on <strong className="text-blue-700 capitalize">
                           "{topicEntries[topicEntries.length - 1]?.[0]}"
                         </strong> to hit the next milestone.</>
                       )}
@@ -351,7 +364,7 @@ export default function ProgressPage() {
                     <CardDescription className="text-xs text-slate-500 mt-0.5">Next missions tailored to your skill gaps</CardDescription>
                   </div>
                   <button
-  onClick={() => navigate("/")}
+  onClick={() => navigate("/gemini-report")}
   className="text-blue-600 hover:text-blue-800 text-xs font-bold flex items-center gap-0.5 transition-colors"
 >
   View Full Map <ChevronRight className="h-3.5 w-3.5" />

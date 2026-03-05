@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react"
+import React, { useState, useEffect, useRef } from "react"
 import { useNavigate } from "react-router-dom"
 import { Button } from "../components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card"
@@ -164,22 +164,90 @@ export default function EmployabilityTestPage() {
   const navigate = useNavigate()
   const { user } = useAuth()
   
-  // Test State
-  const [hasStarted, setHasStarted] = useState(false)
-  const [questions, setQuestions] = useState([])
-  const [currentIdx, setCurrentIdx] = useState(0)
-  const [answers, setAnswers] = useState({}) // maps question index to selected option index
-  const [isFinished, setIsFinished] = useState(false)
+  // 1. Create a unique key based on login status
+  const authKey = user ? (user.id || user.uid || user.email || "logged_in_user") : "guest"
+  const prevAuthKey = useRef(authKey)
+  // 2. Auth-aware helper (inside the component now!)
+  const getStored = (baseKey, defaultVal) => {
+    try {
+      const saved = sessionStorage.getItem(`${baseKey}_${authKey}`)
+      return saved !== null ? JSON.parse(saved) : defaultVal
+    } catch {
+      return defaultVal
+    }
+  }
+
+  // Test State (Now pulls from getStored)
+  const [hasStarted, setHasStarted] = useState(() => getStored('emp_hasStarted', false))
+  const [questions, setQuestions] = useState(() => getStored('emp_questions', []))
+  const [currentIdx, setCurrentIdx] = useState(() => getStored('emp_currentIdx', 0))
+  const [answers, setAnswers] = useState(() => getStored('emp_answers', {}))
+  const [isFinished, setIsFinished] = useState(() => getStored('emp_isFinished', false))
   const [showSolutions, setShowSolutions] = useState(false)
   
-  // Timer State (45 minutes = 2700 seconds)
-  const [timeLeft, setTimeLeft] = useState(2700)
+  // Timer State 
+  const [timeLeft, setTimeLeft] = useState(() => getStored('emp_timeLeft', 2700))
 
+  // Break State
+  const [breakMode, setBreakMode] = useState(() => getStored('emp_breakMode', "none"))
+  const [breakTimeLeft, setBreakTimeLeft] = useState(() => getStored('emp_breakTimeLeft', 0))
+  const [selectedBreakDuration, setSelectedBreakDuration] = useState(120)
+
+  // 3. FORCE test to reset/swap instantly if they log in/out while on the page
+  // 3. FORCE test to reset instantly and completely wipe if they log in/out
+  useEffect(() => {
+    if (prevAuthKey.current !== authKey) {
+      // Auth changed! Wipe memory for both the old and new auth states
+      ['emp_hasStarted', 'emp_currentIdx', 'emp_answers', 'emp_isFinished', 'emp_timeLeft', 'emp_breakMode', 'emp_breakTimeLeft', 'emp_questions'].forEach(k => {
+        sessionStorage.removeItem(`${k}_${prevAuthKey.current}`)
+        sessionStorage.removeItem(`${k}_${authKey}`)
+      })
+
+      // Reset everything back to the Start Screen
+      setHasStarted(false)
+      setQuestions([])
+      setCurrentIdx(0)
+      setAnswers({})
+      setIsFinished(false)
+      setTimeLeft(2700)
+      setBreakMode("none")
+      setBreakTimeLeft(0)
+
+      prevAuthKey.current = authKey
+    }
+  }, [authKey])
+
+  // Break Timer Logic
+  useEffect(() => {
+    if (breakMode !== "active") return
+    if (breakTimeLeft <= 0) {
+      setBreakMode("none") // Auto-resume when break ends
+      return
+    }
+    const timer = setInterval(() => setBreakTimeLeft((t) => t - 1), 1000)
+    return () => clearInterval(timer)
+  }, [breakMode, breakTimeLeft])
   // Initialize and Shuffle Questions on Mount
   useEffect(() => {
+    if (questions.length === 0){
     const shuffled = [...QUESTION_BANK].sort(() => Math.random() - 0.5).slice(0, 15)
     setQuestions(shuffled)
-  }, [])
+    }
+  }, [questions.length])
+
+// AUTO-SAVE ENGINE: Namespaced by authKey!
+  useEffect(() => {
+    if (questions.length > 0) {
+      sessionStorage.setItem(`emp_hasStarted_${authKey}`, JSON.stringify(hasStarted))
+      sessionStorage.setItem(`emp_currentIdx_${authKey}`, JSON.stringify(currentIdx))
+      sessionStorage.setItem(`emp_answers_${authKey}`, JSON.stringify(answers))
+      sessionStorage.setItem(`emp_isFinished_${authKey}`, JSON.stringify(isFinished))
+      sessionStorage.setItem(`emp_timeLeft_${authKey}`, JSON.stringify(timeLeft))
+      sessionStorage.setItem(`emp_breakMode_${authKey}`, JSON.stringify(breakMode))
+      sessionStorage.setItem(`emp_breakTimeLeft_${authKey}`, JSON.stringify(breakTimeLeft))
+      sessionStorage.setItem(`emp_questions_${authKey}`, JSON.stringify(questions))
+    }
+  }, [hasStarted, currentIdx, answers, isFinished, timeLeft, breakMode, breakTimeLeft, questions, authKey])
 
   // Timer Logic: Only runs if the test HAS started and IS NOT finished
   useEffect(() => {
@@ -193,7 +261,7 @@ export default function EmployabilityTestPage() {
 
     const timer = setInterval(() => setTimeLeft((t) => t - 1), 1000)
     return () => clearInterval(timer)
-  }, [hasStarted, isFinished, timeLeft])
+  }, [hasStarted, isFinished, timeLeft, breakMode])
 
   const formatTime = (seconds) => {
     const m = Math.floor(seconds / 60)
@@ -313,7 +381,9 @@ export default function EmployabilityTestPage() {
                 <p className="text-xs text-slate-500 font-medium mb-4">
                   It's okay to take 2 minutes to stretch and relax.
                 </p>
-                <Button variant="outline" className="w-full bg-white border-blue-200 text-blue-600 hover:bg-blue-100 font-bold text-xs rounded-xl">
+                <Button variant="outline" className="w-full bg-white border-blue-200 text-blue-600 hover:bg-blue-100 font-bold text-xs rounded-xl"
+                onClick = {() => setBreakMode("selecting")}
+                disabled= {isFinished}>
                   Take a short break
                 </Button>
               </CardContent>
@@ -323,8 +393,72 @@ export default function EmployabilityTestPage() {
 
           {/* RIGHT MAIN AREA */}
           <div className="lg:col-span-9">
-            
-            {!hasStarted ? (
+            {breakMode !== "none" ? (
+              /* --- BREAK INTERFACE --- */
+              <div className="animate-fade-in flex flex-col items-center justify-center h-full min-h-[500px]">
+                <Card className="bg-white border-slate-200 shadow-lg rounded-3xl w-full max-w-2xl text-center p-10 md:p-14">
+                  {breakMode === "selecting" ? (
+                    <div className="animate-slide-down">
+                      <div className="mx-auto w-16 h-16 bg-blue-50 text-blue-500 rounded-full flex items-center justify-center mb-6">
+                        <Coffee className="h-8 w-8" />
+                      </div>
+                      <h2 className="text-3xl font-bold text-slate-900 mb-3">Choose Break Duration</h2>
+                      <p className="text-slate-500 mb-8 font-medium">Your test timer will be paused.</p>
+                      
+                      <div className="grid grid-cols-3 gap-4 mb-8">
+                        {[ {label: "2 min", val: 120},{label: "5 min", val: 300}, {label: "10 min", val: 600} ].map((opt) => (
+                          <button
+                            key={opt.val}
+                            onClick={() => setSelectedBreakDuration(opt.val)}
+                            className={`py-4 rounded-2xl border-2 font-bold transition-all ${
+                              selectedBreakDuration === opt.val 
+                                ? "border-blue-600 bg-blue-50 text-blue-700" 
+                                : "border-slate-200 text-slate-600 hover:border-blue-300 hover:bg-slate-50"
+                            }`}
+                          >
+                            {opt.label}
+                          </button>
+                        ))}
+                      </div>
+                      
+                      <div className="flex gap-4 justify-center">
+                        <Button variant="ghost" onClick={() => setBreakMode("none")} className="text-slate-500 hover:text-slate-800">
+                          Cancel
+                        </Button>
+                        <Button 
+                          onClick={() => {
+                            setBreakTimeLeft(selectedBreakDuration)
+                            setBreakMode("active")
+                          }} 
+                          className="bg-blue-600 hover:bg-blue-700 text-white px-8 rounded-xl"
+                        >
+                          Start Break
+                        </Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="animate-fade-in">
+                      <h2 className="text-xl font-bold text-slate-500 uppercase tracking-widest mb-6">Break Time</h2>
+                      <div className={`text-7xl md:text-9xl font-black font-mono tracking-tighter mb-8 transition-colors duration-500 ${
+                        breakTimeLeft <= 15 ? "text-red-500 animate-pulse" : "text-slate-900"
+                      }`}>
+                        {formatTime(breakTimeLeft)}
+                      </div>
+                      <p className={`font-medium mb-10 ${breakTimeLeft <= 15 ? "text-red-600" : "text-slate-500"}`}>
+                        {breakTimeLeft <= 15 ? "Break is almost over! Get ready." : "Relax and stretch. Your test is safely paused."}
+                      </p>
+                      <Button 
+                        variant="outline"
+                        onClick={() => setBreakMode("none")} 
+                        className="border-slate-300 text-slate-700 hover:bg-slate-100 px-8 rounded-xl font-bold"
+                      >
+                        End Break Early
+                      </Button>
+                    </div>
+                  )}
+                </Card>
+              </div>
+            ) : !hasStarted ? (
               
               /* --- START SCREEN --- */
               <div className="animate-fade-in flex flex-col items-center justify-center h-full min-h-[500px]">
@@ -500,7 +634,11 @@ export default function EmployabilityTestPage() {
                       </p>
                       <div className="flex gap-3 justify-center md:justify-start">
                         <Button 
-                          onClick={() => window.location.reload()} 
+                          onClick={() => {
+                            // Wipe specific user's memory before reloading!
+                            ['emp_hasStarted', 'emp_currentIdx', 'emp_answers', 'emp_isFinished', 'emp_timeLeft', 'emp_breakMode', 'emp_breakTimeLeft', 'emp_questions'].forEach(k => sessionStorage.removeItem(`${k}_${authKey}`));
+                            window.location.reload();
+                          }} 
                           className="bg-blue-600 hover:bg-blue-700 text-white rounded-xl shadow-md"
                         >
                           <ListRestart className="h-4 w-4 mr-2" /> Try Again
