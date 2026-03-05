@@ -108,10 +108,10 @@ export default function HomePage() {
           setTimeout(() => {
             setIsLoading(false)
             initialLoadDone = true
-          }, 500)
+          }, 100)
           return 100
         }
-        return prev + 2
+        return prev + 10
       })
     }, 30)
     return () => clearInterval(timer)
@@ -508,14 +508,14 @@ export default function HomePage() {
               {/* ✅ Light theme analytics panel */}
               <div className="p-6 lg:p-8 lg:w-1/2 bg-slate-50/50 border-r border-slate-200 flex items-center justify-center relative">
                 <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-purple-200/40 via-transparent to-transparent pointer-events-none" />
-                <div className="bg-white border border-slate-200 rounded-2xl w-full max-w-md shadow-2xl shadow-slate-200/60 overflow-hidden transform transition-transform hover:-translate-y-1 duration-500">
+                <div className="bg-white border border-slate-200 rounded-2xl w-full max-w-lg shadow-2xl shadow-slate-200/60 overflow-hidden transform transition-transform hover:-translate-y-1 duration-500">
                   <div className="bg-gradient-to-r from-purple-600 to-indigo-600 p-4 flex items-center justify-between">
                     <div className="flex items-center gap-2 text-white font-bold text-xs tracking-wide">
                       <Sparkles className="w-3.5 h-3.5" /> GEMINI PERFORMANCE ANALYSIS
                     </div>
                     <Badge className="bg-white/20 text-white border-none text-[8px] tracking-wider px-1.5 backdrop-blur-sm">GEMINI-2.5-PRO</Badge>
                   </div>
-                  <div className="p-5 lg:p-6 space-y-6">
+                  <div className="p-8 lg:p-12 space-y-10">
                     <div>
                       <div className="flex justify-between text-xs mb-2.5">
                         <span className="text-slate-800 font-bold">Complex Data Interpretation</span>
@@ -541,19 +541,7 @@ export default function HomePage() {
                         <Sparkles className="w-3 h-3 text-indigo-500" /> Gemini Insight: Work on syllogism patterns.
                       </p>
                     </div>
-                    <div className="pt-6 border-t border-slate-200 border-dashed">
-                      <span className="text-[9px] font-bold text-slate-400 tracking-wider uppercase block mb-3">GEMINI RECOMMENDED DRILL</span>
-                      <div className="bg-slate-50 border border-slate-200 hover:border-purple-300 p-3 rounded-xl flex items-start gap-3 cursor-pointer transition-colors duration-300 group">
-                        <div className="p-2 bg-purple-100 rounded-lg text-purple-600 group-hover:bg-purple-600 group-hover:text-white transition-colors">
-                          <FileText className="w-4 h-4" />
-                        </div>
-                        <div className="flex-1">
-                          <h5 className="text-slate-900 text-xs font-bold mb-0.5 group-hover:text-purple-700 transition-colors">Advanced Matrix Reasoning 2.0</h5>
-                          <p className="text-[10px] text-slate-500 font-medium">Video Guide • 12 mins</p>
-                        </div>
-                        <ExternalLink className="w-3.5 h-3.5 text-slate-400 group-hover:text-purple-600 transition-colors mt-0.5" />
-                      </div>
-                    </div>
+                    
                   </div>
                 </div>
               </div>
